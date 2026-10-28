@@ -18,13 +18,16 @@ scenario`, `chaos`, `bench` ([`BENCH.md`](BENCH.md)), `bench-live`, `lifecycle-*
 
 **Gun Game prototype:** `make gun-game` starts Rust with an opt-in free-for-all
 weapon progression. Choose a default class to spawn, then add opponents with the
-console command `bot add 3`. Each opponent kill advances through USP, MP5K, M4,
-SPAS-12 and Intervention; a kill with the final weapon starts the end-of-match sequence. Progress
-survives deaths, and suicides do not advance it. This is an experimental local
-mode; the usual free-for-all scoreboard and class perks still apply. The stock
-end-of-match script currently reports missing match-data upload services, so
-post-match presentation may be incomplete. Override
-the map with `make gun-game ZONE=mp_terminal`.
+console command `bot add 3`. The 81-level IW4/T6 sequence moves from pistols
+through primaries, precision weapons, launchers and throwing weapons; the full
+list is in [`GUN-GAME.md`](GUN-GAME.md). Each opponent kill advances a level,
+while a melee kill leaves the killer in place and demotes the victim one level.
+Progress survives deaths, and suicides do not advance it. With cheats enabled,
+`gungame_advance` advances the local player one level and re-equips immediately.
+This is an experimental local mode; the usual free-for-all scoreboard and class
+perks still apply. The sequence requires T6 content. The stock end-of-match script
+currently reports missing match-data upload services, so post-match presentation
+may be incomplete. Override the map with `make gun-game ZONE=mp_terminal`.
 
 
 Linux startup creates `iw4`, `iw5`, `t5` and `t6` symlinks in `IW4L_GAMES` for missing games with exactly one valid Steam installation. Existing entries are preserved.
@@ -36,7 +39,7 @@ Escape returns to the menu, and readiness opens the editor for unlocked accounts
 
 **Cheats are on by default.** The host accepts the debug
 actions: `move`, `look`, `tp`, `nudge`, `god`, `kill`, `damage`, `force_spawn`,
-`force_match_start`, `rotatevelocity` and the `give` supply commands. `--no-cheats`
+`force_match_start`, `rotatevelocity`, `gungame_advance` and the `give` supply commands. `--no-cheats`
 turns them off for `map`, `serve` and `menu`; a lobby host toggles them in the
 game setup.
 

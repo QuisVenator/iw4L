@@ -98,6 +98,15 @@ pub(crate) fn register_debug_move_commands(registry: &mut ConsoleRegistry) {
             "force_match_start — skip waitForPlayers and matchStartTimer (needs cheats; invented)",
         ));
     }
+    if registry.resolve("gungame_advance").is_none() {
+        registry.register(
+            crate::CommandSpec::new("gungame_advance")
+                .alias("gg_advance")
+                .usage(
+                    "gungame_advance — advance the local player one Gun Game level (needs cheats)",
+                ),
+        );
+    }
 }
 
 pub(crate) fn route_debug_move_commands(
@@ -326,6 +335,43 @@ pub(crate) fn route_debug_move_commands(
                 }
                 echo(
                     format!("kill: queued ForceDeath request_id={request_id}"),
+                    &mut console,
+                    &mut line,
+                );
+            }
+            "gungame_advance" | "gg_advance" => {
+                if !alive(&presented, local.0) {
+                    echo(
+                        "gungame_advance: not Alive — spawn a class first".into(),
+                        &mut console,
+                        &mut line,
+                    );
+                    continue;
+                }
+                if authority.as_ref().is_some_and(|a| !a.0.cheats_enabled()) {
+                    echo(
+                        "gungame_advance: cheats are off".into(),
+                        &mut console,
+                        &mut line,
+                    );
+                    continue;
+                }
+                let Some(inbox) = inbox.as_deref_mut() else {
+                    echo(
+                        "gungame_advance: no action inbox (not a listen host)".into(),
+                        &mut console,
+                        &mut line,
+                    );
+                    continue;
+                };
+                let request_id = seq.allocate();
+                if let Err(error) = inbox.push(local.0, ClientAction::GunGameAdvance { request_id })
+                {
+                    echo(format!("gungame_advance: {error}"), &mut console, &mut line);
+                    continue;
+                }
+                echo(
+                    format!("gungame_advance: queued request_id={request_id}"),
                     &mut console,
                     &mut line,
                 );

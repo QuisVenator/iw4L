@@ -298,6 +298,15 @@ pub(crate) fn give_killstreak(world: &mut World, client: u32, name: &str) -> boo
     .is_ok()
 }
 
+pub(crate) fn raise_player_event(world: &mut World, client: u32, name: &str) -> bool {
+    let player = player_object(world, client);
+    if player == Value::Undefined {
+        return false;
+    }
+    raise(world, player, name, Vec::new());
+    true
+}
+
 pub(crate) fn settle_deaths(world: &mut World) {
     let now = now_ms(world);
     loop {
@@ -311,7 +320,8 @@ pub(crate) fn settle_deaths(world: &mut World) {
         }
         if callback == KILLED {
             let attacker = args.get(1).cloned().unwrap_or(Value::Undefined);
-            raise(world, victim.clone(), "death", vec![attacker]);
+            let means = args.get(3).cloned().unwrap_or(Value::Undefined);
+            raise(world, victim.clone(), "death", vec![attacker, means]);
         }
         if run_now(world, callback, victim, args, now).is_err() {
             return;

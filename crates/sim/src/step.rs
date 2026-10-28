@@ -1195,6 +1195,18 @@ fn apply_action(
         } => {
             return apply_debug_damage(world, tick, id, amount);
         }
+        ClientAction::GunGameAdvance { request_id: _ } => {
+            if !world.bootstrap_ref().allow_debug_actions
+                || !world
+                    .client_meta(id)
+                    .is_some_and(|m| m.lifecycle == ClientLifecycle::Alive)
+                || !crate::script::raise_player_event(world.ecs(), id.0, "gungame_advance")
+            {
+                return ActionOutcome::Refused;
+            }
+
+            ActionOutcome::Applied
+        }
     }
 }
 

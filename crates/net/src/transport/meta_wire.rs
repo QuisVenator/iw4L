@@ -221,6 +221,10 @@ pub(crate) fn encode_action(out: &mut WireWriter, action: &ClientAction) {
             out.put_u32(request_id);
             out.put_bytes(&name);
         }
+        ClientAction::GunGameAdvance { request_id } => {
+            out.put_u8(25);
+            out.put_u32(request_id);
+        }
     }
 }
 
@@ -353,6 +357,9 @@ pub(crate) fn decode_action(input: &mut WireReader<'_>) -> Result<ClientAction, 
             input.get_bytes(&mut name)?;
             Ok(ClientAction::GiveKillstreak { request_id, name })
         }
+        25 => Ok(ClientAction::GunGameAdvance {
+            request_id: input.get_u32()?,
+        }),
         14 => {
             let request_id = input.get_u32()?;
             let pick = match input.get_u8()? {
