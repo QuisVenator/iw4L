@@ -16,6 +16,17 @@ write `make map ZONE=iw5:mp_overwatch` or use `cargo run`. Recipes: `make
 scenario`, `chaos`, `bench` ([`BENCH.md`](BENCH.md)), `bench-live`, `lifecycle-*`
 (`*_CMDS` in the `Makefile`). Live recipes use `[profile.play]`; LTO is `PROFILE=release`.
 
+**Gun Game prototype:** `make gun-game` starts Rust with an opt-in free-for-all
+weapon progression. Choose a default class to spawn, then add opponents with the
+console command `bot add 3`. Each opponent kill advances through USP, MP5K, M4,
+SPAS-12 and Intervention; a kill with the final weapon starts the end-of-match sequence. Progress
+survives deaths, and suicides do not advance it. This is an experimental local
+mode; the usual free-for-all scoreboard and class perks still apply. The stock
+end-of-match script currently reports missing match-data upload services, so
+post-match presentation may be incomplete. Override
+the map with `make gun-game ZONE=mp_terminal`.
+
+
 Linux startup creates `iw4`, `iw5`, `t5` and `t6` symlinks in `IW4L_GAMES` for missing games with exactly one valid Steam installation. Existing entries are preserved.
 
 `menu` opens the main menu immediately while the shared weapon catalog prepares

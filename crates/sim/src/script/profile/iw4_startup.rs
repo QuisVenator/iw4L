@@ -17,6 +17,11 @@ impl Iw4Startup {
             gametype.clone(),
         ];
         let mut entries = vec![format!("{gametype}::main")];
+        let gun_game = "iw4l_modes/gun_game";
+        if resolver.read_bytes(gun_game).is_ok() {
+            roots.push(gun_game.to_owned());
+            entries.push(format!("{gun_game}::main"));
+        }
         if resolver.read_bytes(&map).is_ok() {
             entries.push(format!("{map}::main"));
             roots.push(map);

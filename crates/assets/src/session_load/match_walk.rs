@@ -295,6 +295,12 @@ pub(super) async fn walk_prepared_match(
     let mut scripts = iw4_scripts;
     scripts.overlay(map_scripts);
     scripts.insert_source("iw4l_maps/barrels", crate::map_scripts::BARRELS.to_owned());
+    if std::env::var_os("IW4L_GUN_GAME").is_some() {
+        scripts.insert_source(
+            "iw4l_modes/gun_game",
+            crate::map_scripts::GUN_GAME.to_owned(),
+        );
+    }
     scripts.insert_source(
         "iw4l_t6/equipment",
         crate::map_scripts::T6_EQUIPMENT.to_owned(),

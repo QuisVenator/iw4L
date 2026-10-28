@@ -90,6 +90,10 @@ map: require-games
 	@test -n "$(or $(ZONE),$(ARGS))" || { echo "usage: make map <zone>   e.g. make map mp_boneyard"; echo "       make map ZONE=iw5:mp_overwatch   (colon is a make pattern)"; exit 1; }
 	cd $(ROOT) && $(CARGO) run $(PROFILE_ARG) -p launcher -- map $(or $(ZONE),$(ARGS)) $(CMDS_ARG)
 
+# Opt-in prototype: IW4 free-for-all with a five-weapon Gun Game sequence.
+gun-game: require-games
+	cd $(ROOT) && IW4L_GAMETYPE=dm IW4L_GUN_GAME=1 $(CARGO) run $(PROFILE_ARG) -p launcher -- map $(or $(ZONE),mp_rust) $(CMDS_ARG)
+
 export-gltf: require-games
 	@test -n "$(or $(ZONE),$(ARGS))" || { echo "usage: make export-gltf <zone>"; exit 1; }
 	cd $(ROOT) && $(CARGO) run $(PROFILE_ARG) -p launcher -- export-gltf $(or $(ZONE),$(ARGS))

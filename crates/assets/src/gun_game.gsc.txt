@@ -1,0 +1,67 @@
+main()
+{
+    level.scoreLimitOverride = true;
+    level.gunGameWeapons = [];
+    level.gunGameWeapons[0] = "usp_mp";
+    level.gunGameWeapons[1] = "mp5k_mp";
+    level.gunGameWeapons[2] = "m4_mp";
+    level.gunGameWeapons[3] = "spas12_mp";
+    level.gunGameWeapons[4] = "cheytac_mp";
+    level thread gunGameConnect();
+}
+
+gunGameConnect()
+{
+    level endon("game_ended");
+    for (;;)
+    {
+        level waittill("connected", player);
+        player.gunGameLevel = 0;
+        player thread gunGameSpawn();
+        player thread gunGameDeath();
+    }
+}
+
+gunGameSpawn()
+{
+    self endon("disconnect");
+    self endon("game_ended");
+    for (;;)
+    {
+        self waittill("spawned_player");
+        wait 0.1;
+        self gunGameEquip();
+    }
+}
+
+gunGameDeath()
+{
+    self endon("disconnect");
+    self endon("game_ended");
+    for (;;)
+    {
+        self waittill("death", attacker);
+        if (isdefined(attacker) && isplayer(attacker) && attacker != self && isdefined(attacker.gunGameLevel))
+        {
+            if (attacker.gunGameLevel < level.gunGameWeapons.size - 1)
+            {
+                attacker.gunGameLevel++;
+                attacker gunGameEquip();
+            }
+            else
+            {
+                level thread maps\mp\gametypes\_gamelogic::endGame(attacker, &"MP_SCORE_LIMIT_REACHED");
+            }
+        }
+    }
+}
+
+gunGameEquip()
+{
+    weapon = level.gunGameWeapons[self.gunGameLevel];
+    self takeallweapons();
+    self giveweapon(weapon);
+    self givemaxammo(weapon);
+    self switchtoweapon(weapon);
+    self iprintln("Gun Game: weapon " + (self.gunGameLevel + 1) + " / " + level.gunGameWeapons.size);
+}
