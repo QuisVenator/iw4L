@@ -342,7 +342,7 @@ mod tests {
         let mut dvars = dvars();
         assert_eq!(
             normalize_gun_game(&mut dvars).as_deref(),
-            Ok("Saved 81 ordered weapon levels.")
+            Ok("Saved 79 ordered weapon levels.")
         );
         assert_eq!(
             dvars.get(gamemode_iw4::gun_game::WEAPONS_DVAR),

@@ -88,8 +88,6 @@ pub const DEFAULT_WEAPONS: &[&str] = &[
     "t6:weapon/smaw_mp",
     "t6:weapon/usrpg_mp",
     "t6:weapon/crossbow_mp",
-    "iw4:weapon/riotshield_mp",
-    "t6:weapon/riotshield_mp",
     "iw4:weapon/throwingknife_mp",
     "t6:weapon/knife_ballistic_mp",
     DEFAULT_FINAL_WEAPON,
@@ -101,8 +99,13 @@ mod tests {
 
     #[test]
     fn default_rotation_ends_with_the_default_random_final() {
-        assert_eq!(DEFAULT_WEAPONS.len(), 81);
+        assert_eq!(DEFAULT_WEAPONS.len(), 79);
         assert_eq!(DEFAULT_WEAPONS.last().copied(), Some(DEFAULT_FINAL_WEAPON));
+        assert!(
+            !DEFAULT_WEAPONS
+                .iter()
+                .any(|weapon| weapon.contains("riotshield"))
+        );
         assert_eq!(
             DEFAULT_WEAPONS
                 .iter()

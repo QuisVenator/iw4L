@@ -39,6 +39,7 @@ main()
         }
     }
     level thread gunGameConnect();
+    level thread gunGameReconcile();
 }
 
 gunGameFallbackWeapons()
@@ -111,14 +112,76 @@ gunGameConnect()
     for (;;)
     {
         level waittill("connected", player);
-        player.gunGameLevel = 0;
-        if (level.gunGameProgression == "random" && level.gunGameRandomScope == "perplayer")
+        gunGameStartPlayer(player);
+    }
+}
+
+gunGameStartPlayer(player)
+{
+    if (isdefined(player.gunGameStarted) && player.gunGameStarted)
+    {
+        return;
+    }
+    player.gunGameStarted = true;
+    player.gunGameLevel = 0;
+    if (level.gunGameProgression == "random" && level.gunGameRandomScope == "perplayer")
+    {
+        player.gunGameWeapons = gunGameRandomSequence();
+    }
+    player thread gunGameInitialEquip();
+    player thread gunGameSpawn();
+    player thread gunGameDeath();
+    player thread gunGameAdvance();
+}
+
+gunGameReconcile()
+{
+    level endon("game_ended");
+    for (;;)
+    {
+        wait 0.5;
+        foreach (player in level.players)
         {
-            player.gunGameWeapons = gunGameRandomSequence();
+            if (!isplayer(player))
+            {
+                continue;
+            }
+            gunGameStartPlayer(player);
+            if (!isAlive(player))
+            {
+                continue;
+            }
+            levelCount = gunGameLevelCount(player);
+            if (levelCount <= 0)
+            {
+                continue;
+            }
+            index = player.gunGameLevel;
+            if (index >= levelCount)
+            {
+                index = levelCount - 1;
+            }
+            weapon = gunGameWeaponAt(player, index);
+            if (!player hasweapon(weapon))
+            {
+                player gunGameEquip();
+            }
         }
-        player thread gunGameSpawn();
-        player thread gunGameDeath();
-        player thread gunGameAdvance();
+    }
+}
+
+gunGameInitialEquip()
+{
+    self endon("disconnect");
+    self endon("game_ended");
+    while (!isAlive(self))
+    {
+        wait 0.1;
+    }
+    wait 0.1;
+    if (isAlive(self))
+    {
+        self gunGameEquip();
     }
 }
 
@@ -216,6 +279,7 @@ gunGameEquip()
         index = levelCount - 1;
     }
     weapon = gunGameWeaponAt(self, index);
+    self clearperks();
     self takeallweapons();
     self giveweapon(weapon);
     self givemaxammo(weapon);

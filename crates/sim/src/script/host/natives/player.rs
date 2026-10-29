@@ -970,8 +970,14 @@ fn player_weapon(
     args: &[Value],
     index: usize,
 ) -> Result<u32, String> {
+    let name = string(args, index)?;
+    let explicit_namespace = weapon_namespace(&name);
     let weapon = weapon_arg(world, args, index)?;
-    let native = super::super::players::bridged_weapon(world, id.0, weapon);
+    let native = if explicit_namespace {
+        weapon
+    } else {
+        super::super::players::bridged_weapon(world, id.0, weapon)
+    };
     let frame = FrameWorld::from_world(world);
     if frame
         .weapon_combat_row(native)
@@ -992,6 +998,27 @@ fn player_weapon(
         return Ok(owned);
     }
     Ok(native)
+}
+
+fn weapon_namespace(name: &str) -> bool {
+    name.split_once(':').is_some_and(|(namespace, _)| {
+        ["iw4", "iw5", "t5", "t6"]
+            .iter()
+            .any(|known| namespace.eq_ignore_ascii_case(known))
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::weapon_namespace;
+
+    #[test]
+    fn explicit_weapon_namespaces_bypass_stand_in_bridges() {
+        assert!(weapon_namespace("iw4:weapon/usp_mp"));
+        assert!(weapon_namespace("T6:weapon/ak47_mp"));
+        assert!(!weapon_namespace("usp_mp"));
+        assert!(!weapon_namespace("maps/mp/weapons/usp_mp"));
+    }
 }
 
 fn weapon_value(world: &mut World, weapon: u32) -> Value {

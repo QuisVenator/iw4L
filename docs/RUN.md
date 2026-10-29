@@ -19,18 +19,19 @@ scenario`, `chaos`, `bench` ([`BENCH.md`](BENCH.md)), `bench-live`, `lifecycle-*
 **Gun Game:** `make gun-game` starts the registered free-for-all-based Gun Game
 mode. It is also the `GUN GAME` entry in the host game-mode menu (`gun` on the
 wire or via `IW4L_GAMETYPE=gun`). Choose a default class to spawn, then add
-opponents with the console command `bot add 3`. The default 81-level IW4/T6
+opponents with the console command `bot add 3`. The default 79-level IW4/T6
 sequence moves from pistols through primaries, precision weapons, launchers and
 throwing weapons; the full list and host setup options are in
 [`GUN-GAME.md`](GUN-GAME.md). In the lobby, `GAME SETUP` → `GUN GAME SETUP`
 selects the ordered default or a shared/per-player random progression from a
 weapon pool plus a fixed final weapon. Each opponent kill advances a level,
 while a melee kill leaves the killer in place and demotes the victim one level.
-Suicides also demote, and killstreaks and dropped-weapon pickups are disabled.
+Suicides also demote, and killstreaks, perks and dropped-weapon pickups are
+disabled.
 The scoreboard shows each player's weapon level and sorts by it. Progress
 survives deaths. With cheats enabled, `gungame_advance` advances the local player
-one level and re-equips immediately. This is a local mode; class perks still
-apply. The default sequence requires T6 content. The stock end-of-match script
+one level and re-equips immediately. This is a local mode. The default sequence
+requires T6 content. The stock end-of-match script
 currently reports missing match-data upload services, so post-match presentation
 may be incomplete. Override the map with `make gun-game ZONE=mp_terminal`.
 
