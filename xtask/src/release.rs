@@ -12,7 +12,7 @@ use crate::windows;
 const ZSTD_LEVEL: &str = "3";
 const ZSTD_THREADS: &str = "0";
 
-const ARCHIVE_PASSWORD: &[u8] = b"t.me/contextrot";
+pub(crate) const ARCHIVE_PASSWORD: &[u8] = b"t.me/contextrot";
 
 pub struct Git {
     pub rev: String,
@@ -135,15 +135,15 @@ pub fn build_master(root: &Path, profile: &str) -> Res<PathBuf> {
     Ok(bin)
 }
 
-struct GameBlob {
-    name: String,
-    exe_sha: String,
-    exe_size: u64,
-    blob_sha: String,
-    blob_size: u64,
+pub(crate) struct GameBlob {
+    pub(crate) name: String,
+    pub(crate) exe_sha: String,
+    pub(crate) exe_size: u64,
+    pub(crate) blob_sha: String,
+    pub(crate) blob_size: u64,
 }
 
-fn package_game(root: &Path, game_exe: &Path, dest_dir: &Path) -> Res<GameBlob> {
+pub(crate) fn package_game(root: &Path, game_exe: &Path, dest_dir: &Path) -> Res<GameBlob> {
     require_tools(&["zstd"])?;
     let exe_sha = file_sha256(game_exe)?;
     let zstd_ver = zstd_version()?;

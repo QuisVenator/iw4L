@@ -11,13 +11,6 @@ pub struct San {
     pub host: String,
 }
 
-impl San {
-    fn value(&self) -> String {
-        let host = if is_ipv4(&self.host) { "IP" } else { "DNS" };
-        format!("DNS:{},{host}:{}", self.label, self.host)
-    }
-}
-
 pub struct Ca {
     dir: PathBuf,
 }
@@ -52,12 +45,23 @@ impl Ca {
     /// never replaced: that would silently invalidate every `ca.pem` already
     /// handed out.
     pub fn ensure(&self, san: &San) -> Res<()> {
+        self.ensure_identity(&san.label, Some(&san.host))
+    }
+
+    /// Make sure the directory holds a CA and a server identity that only names
+    /// `label`. The connection address is supplied separately by the client, so
+    /// a LAN descriptor can move between subnets without minting a new identity.
+    pub fn ensure_dns(&self, label: &str) -> Res<()> {
+        self.ensure_identity(label, None)
+    }
+
+    fn ensure_identity(&self, label: &str, host: Option<&str>) -> Res<()> {
         crate::shell::require_tools(&["openssl"])?;
         std::fs::create_dir_all(&self.dir)
             .map_err(|error| format!("creating {}: {error}", self.dir.display()))?;
         set_mode(&self.dir, 0o700)?;
         self.ensure_ca()?;
-        self.ensure_server(san)?;
+        self.ensure_server(label, host)?;
         run(Command::new("openssl")
             .arg("verify")
             .arg("-CAfile")
@@ -89,18 +93,20 @@ impl Ca {
             .args(["-subj", "/CN=IW4L Release CA"]))
     }
 
-    fn ensure_server(&self, san: &San) -> Res<()> {
+    fn ensure_server(&self, label: &str, host: Option<&str>) -> Res<()> {
         let (key, cert) = (self.server_key(), self.server_cert());
         if key.is_file() && cert.is_file() {
-            if cert_covers(&cert, &format!("DNS:{}", san.label))?
-                && cert_covers_host(&cert, &san.host)?
-            {
+            let host_covered = match host {
+                Some(host) => cert_covers_host(&cert, host)?,
+                None => true,
+            };
+            if cert_covers(&cert, &format!("DNS:{label}"))? && host_covered {
                 return Ok(());
             }
             return Err(format!(
                 "server cert under {} does not cover {}; refusing to replace it",
                 self.dir.display(),
-                san.value()
+                san_value(label, host)
             ));
         }
         if key.exists() || cert.exists() {
@@ -112,7 +118,7 @@ impl Ca {
         gen_key(&key)?;
         let csr = self.dir.join("server.csr");
         let ext = self.dir.join("server.ext");
-        let subject = format!("/CN={}", san.label);
+        let subject = format!("/CN={label}");
         run(Command::new("openssl")
             .args(["req", "-new", "-key"])
             .arg(&key)
@@ -126,7 +132,7 @@ impl Ca {
                  keyUsage=critical,digitalSignature,keyEncipherment\n\
                  extendedKeyUsage=serverAuth\n\
                  subjectAltName={}\n",
-                san.value()
+                san_value(label, host)
             ),
         )
         .map_err(|error| format!("writing {}: {error}", ext.display()))?;
@@ -147,6 +153,16 @@ impl Ca {
         let _ = std::fs::remove_file(&csr);
         let _ = std::fs::remove_file(&ext);
         signed
+    }
+}
+
+fn san_value(label: &str, host: Option<&str>) -> String {
+    match host {
+        Some(host) => {
+            let kind = if is_ipv4(host) { "IP" } else { "DNS" };
+            format!("DNS:{label},{kind}:{host}")
+        }
+        None => format!("DNS:{label}"),
     }
 }
 

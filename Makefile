@@ -11,7 +11,7 @@ GOAL := $(firstword $(MAKECMDGOALS))
 ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
 
 .PHONY: map export-gltf play bench bench-load-session bench-live bench-overhead bench-perf menu menu-shots scenario chaos lifecycle-all lifecycle-swap lifecycle-replace lifecycle-play-in lifecycle-demo-out lifecycle-demo-map launcher deploy logs loc clean help
-.PHONY: build-windows setup-windows release publish github-release
+.PHONY: build-windows setup-windows lan release publish github-release
 .PHONY: mr publish-check approved
 .PHONY: $(ARGS)
 
@@ -33,6 +33,7 @@ ZONE_ARG = $(if $(ZONE),--zone $(ZONE),)
 # uses this same PROFILE (default play).
 PROFILE ?= play
 PROFILE_ARG = --profile $(PROFILE)
+LAN_ARGS ?=
 RELEASE ?=
 TAG ?=
 NOTES ?=
@@ -246,6 +247,9 @@ launcher:
 build-windows:
 	@PROFILE="$(PROFILE)" $(XTASK) windows build
 
+lan:
+	@PROFILE="$(PROFILE)" $(XTASK) lan $(LAN_ARGS)
+
 setup-windows:
 	@$(XTASK) windows setup
 
@@ -355,6 +359,7 @@ help:
 	@echo "make menu-shots   2D UI pack under iw4l-artifacts/menu-shots (no map)"
 	@echo "make launcher windows  build password-protected dev + prod portable ZIPs"
 	@echo "make build-windows     local Windows bins only (PROFILE=play)"
+	@echo "make lan              LAN player ZIP + private host kit under dist/lan"
 	@echo "make setup-windows     rustup target + cargo-xwin (once)"
 	@echo "make release      build once, pack every .iw4l-server in IW4L_GAMES; VPS untouched"
 	@echo "make publish [NAME...]  upload RELEASE= (or dist/releases/LATEST) to its servers"

@@ -32,6 +32,9 @@ For online play, put the `.iw4l-server` file you received from a server operator
 to `iw4l.exe`. With it the game finds that master and updates itself on launch. Details:
 [Windows guide](docs/WINDOWS.md).
 
+For an offline LAN, `make lan` creates a player ZIP with an editable descriptor and a
+private host kit containing the local master and certificate key. See [LAN guide](docs/LAN.md).
+
 ## Build and run
 
 Install Rust through rustup and GNU Make. [Build dependencies](docs/BUILD.md) cover

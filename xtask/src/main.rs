@@ -35,6 +35,7 @@ const REPO_TOOLS: &[&str] = &[
 const SHIP_TOOLS: &[&str] = &[
     "windows [build|setup]",
     "certs <name> <host>",
+    "lan [--port PORT] [--placeholder-ip IP]",
     "release [bundles]",
     "publish [NAME...]",
     "deploy [NAME...]",
@@ -127,6 +128,7 @@ fn ship(cmd: &str, rest: &[String]) -> Option<Res<()>> {
         cmd,
         "windows"
             | "certs"
+            | "lan"
             | "release"
             | "publish"
             | "deploy"
@@ -141,6 +143,7 @@ fn ship(cmd: &str, rest: &[String]) -> Option<Res<()>> {
     Some(Env::load(&root).and_then(|env| match cmd {
         "windows" => xtask::windows::run_cli(&env, rest),
         "certs" => xtask::certs::run_cli(&env, rest),
+        "lan" => xtask::lan::run_cli(&root, &env, rest),
         "release" => xtask::release::run_cli(&root, &env, rest),
         "publish" => xtask::publish::run_cli(&root, rest),
         "deploy" => xtask::publish::deploy(&root, &env, rest),

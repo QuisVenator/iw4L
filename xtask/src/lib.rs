@@ -5,6 +5,7 @@ pub mod dotenv;
 pub mod fmt;
 pub mod frame_budget;
 pub mod github;
+pub mod lan;
 pub mod licenses;
 pub mod live;
 pub mod loc;
