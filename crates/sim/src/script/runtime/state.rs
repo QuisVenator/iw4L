@@ -218,10 +218,12 @@ impl RoundScript {
     }
 }
 
-#[derive(Resource, Clone, Debug, Default)]
+#[derive(Resource, Clone, Debug)]
 pub(crate) struct MatchScript {
     pub(crate) precached: BTreeMap<(&'static str, String), i32>,
     pub(crate) dvars: BTreeMap<String, String>,
+    pub(crate) killstreaks_enabled: bool,
+    pub(crate) weapon_pickups_enabled: bool,
     pub(crate) local_presentation_dvars: bool,
     pub(crate) local_presentation_client: Option<crate::ClientId>,
     pub(crate) pending_local_dvars: Vec<(crate::TargetBoxDvar, String)>,
@@ -229,4 +231,22 @@ pub(crate) struct MatchScript {
     pub(crate) weapon_bridge: BTreeMap<u32, Vec<(u32, u32)>>,
     pub(crate) next_spawned_presence: u32,
     pub(crate) match_data: host::match_data::MatchData,
+}
+
+impl Default for MatchScript {
+    fn default() -> Self {
+        Self {
+            precached: Default::default(),
+            dvars: Default::default(),
+            killstreaks_enabled: true,
+            weapon_pickups_enabled: true,
+            local_presentation_dvars: Default::default(),
+            local_presentation_client: Default::default(),
+            pending_local_dvars: Default::default(),
+            personal_classes: Default::default(),
+            weapon_bridge: Default::default(),
+            next_spawned_presence: Default::default(),
+            match_data: Default::default(),
+        }
+    }
 }

@@ -215,6 +215,18 @@ impl SimWorld {
         crate::script::set_dvar(&mut self.ecs, name, value);
     }
 
+    pub fn set_killstreaks_enabled(&mut self, enabled: bool) {
+        self.ecs
+            .resource_mut::<crate::script::MatchScript>()
+            .killstreaks_enabled = enabled;
+    }
+
+    pub fn set_weapon_pickups_enabled(&mut self, enabled: bool) {
+        self.ecs
+            .resource_mut::<crate::script::MatchScript>()
+            .weapon_pickups_enabled = enabled;
+    }
+
     pub fn gsc_realm(&self) -> Option<crate::script::Realm> {
         self.ecs
             .resource::<crate::script::RoundScript>()

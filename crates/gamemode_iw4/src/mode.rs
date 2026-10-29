@@ -35,17 +35,27 @@ impl ModeRuleHooks {
 /// The mode-facing extension surface. Keep this small and declarative: modes
 /// describe what the engine should run, while retail rules stay in the base
 /// [`GameModeKind`].
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct ModeHooks {
     pub rules: ModeRuleHooks,
     pub scripts: &'static [ScriptExtension],
+    pub killstreaks_enabled: bool,
+    pub weapon_pickups_enabled: bool,
 }
 
 impl ModeHooks {
     pub const NONE: Self = Self {
         rules: ModeRuleHooks::NONE,
         scripts: &[],
+        killstreaks_enabled: true,
+        weapon_pickups_enabled: true,
     };
+}
+
+impl Default for ModeHooks {
+    fn default() -> Self {
+        Self::NONE
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -166,6 +176,8 @@ const MODE_SPECS: [ModeSpec; 9] = [
         hooks: ModeHooks {
             rules: ModeRuleHooks::NONE,
             scripts: GUN_GAME_SCRIPTS,
+            killstreaks_enabled: false,
+            weapon_pickups_enabled: false,
         },
     },
 ];
@@ -274,6 +286,10 @@ mod tests {
         assert_eq!(spec.base, GameModeKind::FreeForAll);
         assert_eq!(spec.token, "gun");
         assert_eq!(spec.hooks.scripts.len(), 1);
+        assert!(!spec.hooks.killstreaks_enabled);
+        assert!(!spec.hooks.weapon_pickups_enabled);
+        assert!(ModeHooks::default().killstreaks_enabled);
+        assert!(ModeHooks::default().weapon_pickups_enabled);
     }
 
     #[test]

@@ -1976,6 +1976,16 @@
               {
                 "Script": "play mouse_click; exec \"ui_select_mode gun\";"
               }
+            ],
+            "focus": [
+              {
+                "Script": "play mouse_over; setItemColor self backcolor 0 0 0 1; setlocalvarstring ui_info_name \"GUN GAME\"; setlocalvarstring ui_info_desc \"Every kill upgrades your weapon. Melee or suicide sends you back one level. Killstreaks and weapon pickups disabled.\"; setlocalvarstring ui_info_icon \"\";"
+              }
+            ],
+            "leave_focus": [
+              {
+                "Script": "setItemColor self backcolor 0 0 0 0; setlocalvarstring ui_info_name \"\"; setlocalvarstring ui_info_desc \"\"; setlocalvarstring ui_info_icon \"\";"
+              }
             ]
           }
         }

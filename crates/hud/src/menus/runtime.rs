@@ -148,6 +148,7 @@ impl Runner<'_, '_> {
                 self.dvars.set(&name, value);
             }
             Command::SetDvar(name, value) => self.set_dvar(&name, &value),
+            Command::SetLocalVarString(name, value) => self.locals.set_string(&name, value),
             Command::ExecOnDvarIntValue {
                 dvar,
                 value,

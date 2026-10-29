@@ -312,6 +312,11 @@ fn overlay_archived_world(
     out.meta.time_limit_ms = live.meta.time_limit_ms;
     out.meta.mode = live.meta.mode;
     out.meta.kind = live.meta.kind;
+    for (id, live_meta) in &live.meta.clients {
+        if let Some((_, archived_meta)) = out.meta.clients.iter_mut().find(|(c, _)| c == id) {
+            archived_meta.mode_level = live_meta.mode_level;
+        }
+    }
     out.meta.sound_aliases = live.meta.sound_aliases.clone();
     out.meta.hud_strings = live.meta.hud_strings.clone();
     out.meta.hud_materials = live.meta.hud_materials.clone();

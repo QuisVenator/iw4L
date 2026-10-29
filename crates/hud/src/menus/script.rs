@@ -16,6 +16,7 @@ pub(crate) enum Command {
     ScriptMenuResponse(String),
     Exec(String),
     SetDvar(String, String),
+    SetLocalVarString(String, String),
     CopyDvar(String, String),
     ExecOnDvarIntValue {
         dvar: String,
@@ -104,6 +105,7 @@ pub(crate) fn parse(script: &str) -> Vec<Command> {
             "exec" | "execnow" => (Command::Exec(arg(i + 1)), 2),
             "copydvar" => (Command::CopyDvar(arg(i + 1), arg(i + 2)), 3),
             "setdvar" => (Command::SetDvar(arg(i + 1), arg(i + 2)), 3),
+            "setlocalvarstring" => (Command::SetLocalVarString(arg(i + 1), arg(i + 2)), 3),
             "execondvarintvalue" | "execnowondvarintvalue" => (
                 Command::ExecOnDvarIntValue {
                     dvar: arg(i + 1),
@@ -151,4 +153,20 @@ pub(crate) fn parse(script: &str) -> Vec<Command> {
         i += used;
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_set_local_var_string_with_spaces() {
+        assert_eq!(
+            parse("setlocalvarstring ui_info_desc \"Every kill upgrades your weapon.\";"),
+            [Command::SetLocalVarString(
+                "ui_info_desc".into(),
+                "Every kill upgrades your weapon.".into()
+            )]
+        );
+    }
 }

@@ -121,6 +121,7 @@ pub struct ClientMatchState {
     pub(crate) name: [u8; 16],
 
     pub kills: i32,
+    pub mode_level: u8,
     pub deaths: i32,
     pub score: i32,
     pub kill_streak: i32,
@@ -228,6 +229,7 @@ impl ClientMatchState {
             ammo_stock: self.ammo_stock,
             score: self.score,
             kills: self.kills,
+            mode_level: self.mode_level,
             deaths: self.deaths,
             kill_streak: self.kill_streak,
             radar: self.radar,
@@ -287,6 +289,7 @@ impl ClientMatchState {
         self.ammo_stock = meta.ammo_stock;
         self.score = meta.score;
         self.kills = meta.kills;
+        self.mode_level = meta.mode_level;
         self.deaths = meta.deaths;
         self.kill_streak = meta.kill_streak;
         self.radar = meta.radar;

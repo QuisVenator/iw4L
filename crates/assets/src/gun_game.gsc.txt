@@ -118,7 +118,19 @@ gunGameDeath()
     for (;;)
     {
         self waittill("death", attacker, means);
-        if (isdefined(attacker) && isplayer(attacker) && attacker != self && isdefined(attacker.gunGameLevel))
+        if (!isdefined(attacker) || attacker == self || (isdefined(means) && (means == "MOD_SUICIDE" || means == "MOD_FALLING")))
+        {
+            if (self.gunGameLevel > 0)
+            {
+                self.gunGameLevel--;
+                self iprintln("Gun Game: suicide demoted you to " + (self.gunGameLevel + 1) + " / " + level.gunGameWeapons.size);
+            }
+            else
+            {
+                self iprintln("Gun Game: suicide cannot demote below the first weapon");
+            }
+        }
+        else if (isdefined(attacker) && isplayer(attacker) && attacker != self && isdefined(attacker.gunGameLevel))
         {
             if (isdefined(means) && means == "MOD_MELEE")
             {

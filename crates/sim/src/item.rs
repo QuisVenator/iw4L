@@ -611,6 +611,9 @@ fn grab_number(world: &mut FrameWorld, walker: ClientId, number: i32) {
     };
     let picker_pm_type = ps.pm_type;
     let already_has = player_weapons_find_slot(&ps.weapons, weapon as i32) >= 0;
+    if !already_has && !weapon_pickups_enabled(world) {
+        return;
+    }
     let (taken, left) = if already_has {
         let (_, _, have_stock) = ammo_from_ps(world, &ps, weapon);
         let room = world
@@ -823,6 +826,13 @@ struct UseItem {
     projectile: bool,
 }
 
+fn weapon_pickups_enabled(world: &FrameWorld) -> bool {
+    world
+        .ecs_ref()
+        .get_resource::<crate::script::MatchScript>()
+        .is_none_or(|script| script.weapon_pickups_enabled)
+}
+
 fn projectile_pickup_ammo(
     world: &FrameWorld,
     walker: ClientId,
@@ -921,7 +931,12 @@ fn selected_item(world: &FrameWorld, walker: ClientId, ps: &PlayerState) -> Opti
     ];
     let (forward, _, _) = angle_vectors(ps.viewangles);
     let mut best: Option<(f32, UseItem)> = None;
-    for number in world.dropped_item_numbers_sorted() {
+    let dropped_items = if weapon_pickups_enabled(world) {
+        world.dropped_item_numbers_sorted()
+    } else {
+        Vec::new()
+    };
+    for number in dropped_items {
         let Some(item) = world.dropped_item_by_number(number) else {
             continue;
         };

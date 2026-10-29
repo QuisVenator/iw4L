@@ -23,10 +23,12 @@ opponents with the console command `bot add 3`. The 81-level IW4/T6 sequence mov
 through primaries, precision weapons, launchers and throwing weapons; the full
 list is in [`GUN-GAME.md`](GUN-GAME.md). Each opponent kill advances a level,
 while a melee kill leaves the killer in place and demotes the victim one level.
-Progress survives deaths, and suicides do not advance it. With cheats enabled,
-`gungame_advance` advances the local player one level and re-equips immediately.
-This is a local mode; the usual free-for-all scoreboard and class
-perks still apply. The sequence requires T6 content. The stock end-of-match script
+Suicides also demote, and killstreaks and dropped-weapon pickups are disabled.
+The scoreboard shows each player's weapon level and sorts by it. Progress
+survives deaths. With cheats enabled, `gungame_advance` advances the local player
+one level and re-equips immediately. This is a local mode; class perks still
+apply. The sequence
+requires T6 content. The stock end-of-match script
 currently reports missing match-data upload services, so post-match presentation
 may be incomplete. Override the map with `make gun-game ZONE=mp_terminal`.
 

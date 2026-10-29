@@ -844,6 +844,14 @@ fn instruction(
                 thread.frames.last().unwrap().receiver.clone()
             };
             match callee {
+                Callee::Script(function)
+                    if is_killstreak_script(program, function as usize)
+                        && !world
+                            .resource::<crate::script::MatchScript>()
+                            .killstreaks_enabled =>
+                {
+                    thread.stack.push(Value::Undefined);
+                }
                 Callee::Script(function) if spawn => {
                     frame_room(world, thread)?;
                     let child = new_thread(world, program, function as usize, receiver, args)?;
@@ -1517,6 +1525,47 @@ fn stack_effect(op: &Op) -> (usize, usize) {
         Op::Indirect(argc, method, _) => (argc + 1 + usize::from(method), 1),
         Op::Notify(argc) | Op::AwaitMatch(argc) => (argc + 2, 0),
         Op::Jump(_) | Op::EnsureLocalArray(_) | Op::FrameEnd | Op::Return => (0, 0),
+    }
+}
+
+fn is_killstreak_script(program: &Program, function: usize) -> bool {
+    let location = &program.functions[function].location;
+    is_killstreak_script_name(&location.module, &location.function)
+}
+
+fn is_killstreak_script_name(module: &str, function: &str) -> bool {
+    if function.eq_ignore_ascii_case("killstreaksplashnotify") {
+        return true;
+    }
+    (function.eq_ignore_ascii_case("givekillstreak")
+        || function.eq_ignore_ascii_case("trygivekillstreak"))
+        && module
+            .split(['/', '\\'])
+            .any(|segment| segment.eq_ignore_ascii_case("killstreaks"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recognizes_retail_killstreak_entry_points() {
+        assert!(is_killstreak_script_name(
+            "maps/mp/killstreaks/_killstreaks",
+            "giveKillstreak"
+        ));
+        assert!(is_killstreak_script_name(
+            "maps/mp/killstreaks/_killstreaks",
+            "tryGiveKillstreak"
+        ));
+        assert!(is_killstreak_script_name(
+            "maps/mp/gametypes/_hud_message",
+            "killstreakSplashNotify"
+        ));
+        assert!(!is_killstreak_script_name(
+            "maps/mp/gametypes/_killstreaks",
+            "unrelated"
+        ));
     }
 }
 

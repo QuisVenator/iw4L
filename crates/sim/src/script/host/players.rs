@@ -274,6 +274,12 @@ pub(crate) fn set_profile(world: &mut World, client: u32, profile: crate::Player
 const GIVE_KILLSTREAK: &str = "maps/mp/killstreaks/_killstreaks::trygivekillstreak";
 
 pub(crate) fn give_killstreak(world: &mut World, client: u32, name: &str) -> bool {
+    if !world
+        .resource::<crate::script::MatchScript>()
+        .killstreaks_enabled
+    {
+        return false;
+    }
     let me = player_object(world, client);
     if me == Value::Undefined {
         return false;
@@ -1462,6 +1468,14 @@ pub(crate) fn store_field(
             }
         }
         return Ok(true);
+    }
+    if name.eq_ignore_ascii_case("gungamelevel") || name.eq_ignore_ascii_case("modelevel") {
+        let level = int(value)?.clamp(0, u8::MAX as i32) as u8;
+        let mut frame = FrameWorld::from_world(world);
+        if frame.client_meta(id).is_some() {
+            frame.client_meta_mut(id).mode_level = level;
+        }
+        return Ok(false);
     }
     match name {
         "sessionstate" => {

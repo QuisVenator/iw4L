@@ -5,7 +5,7 @@ use assets::PreparedLocalizedStrings;
 use bevy::prelude::*;
 use entity_iw4::client_state_name;
 use frame::LaunchIdentity;
-use gamemode_iw4::{ParsedScores, Score};
+use gamemode_iw4::{ModeId, ParsedScores, Score};
 use hud_iw4::{ALIGN_CENTER, normalized_text_scale};
 use net::{
     ClientActionInput, LocalPresentClient, MasterBridge, MasterBridgeState, PresentedSnapshot,
@@ -25,6 +25,7 @@ const LIST_X: f32 = 70.0;
 const LIST_WIDTH: f32 = 500.0;
 const WHITE: [f32; 4] = [1.0; 4];
 const MINE: [f32; 4] = [1.0, 0.8, 0.4, 1.0];
+const GUN_GAME_LEVEL_HEADER: &str = "LVL";
 const COLUMNS: [(f32, f32, &str); 5] = [
     (248.0, 49.0, "CGAME_SB_SCORE"),
     (297.0, 44.0, "CGAME_SB_KILLS"),
@@ -36,6 +37,7 @@ const COLUMNS: [(f32, f32, &str); 5] = [
 #[derive(Clone, Debug)]
 struct ScoreboardRow {
     score: Score,
+    mode_level: u8,
     name: String,
     prestige: i32,
     dead: bool,
@@ -67,6 +69,7 @@ fn rows_from_parsed(snap: &Snapshot, parsed: &ParsedScores) -> Vec<ScoreboardRow
         score.rank = meta.rank;
         rows.push(ScoreboardRow {
             score,
+            mode_level: meta.mode_level,
             name: client_state_name(&meta.name).unwrap_or_default().to_owned(),
             prestige: meta.prestige,
             dead: matches!(
@@ -75,13 +78,41 @@ fn rows_from_parsed(snap: &Snapshot, parsed: &ParsedScores) -> Vec<ScoreboardRow
             ),
         });
     }
-    rows.sort_by(|a, b| {
-        b.score
-            .score
-            .cmp(&a.score.score)
-            .then(a.score.deaths.cmp(&b.score.deaths))
-    });
+    sort_rows(&mut rows, snap.meta.mode == ModeId::GunGame);
     rows
+}
+
+fn sort_rows(rows: &mut [ScoreboardRow], gun_game: bool) {
+    rows.sort_by(|a, b| {
+        if gun_game {
+            b.mode_level
+                .cmp(&a.mode_level)
+                .then(b.score.kills.cmp(&a.score.kills))
+                .then(a.score.deaths.cmp(&b.score.deaths))
+                .then(a.score.client.cmp(&b.score.client))
+        } else {
+            b.score
+                .score
+                .cmp(&a.score.score)
+                .then(a.score.deaths.cmp(&b.score.deaths))
+        }
+    });
+}
+
+fn column_header(gun_game: bool, key: &str, localized: String) -> String {
+    if gun_game && key == "CGAME_SB_SCORE" {
+        GUN_GAME_LEVEL_HEADER.to_owned()
+    } else {
+        localized
+    }
+}
+
+fn primary_value(row: &ScoreboardRow, gun_game: bool) -> i32 {
+    if gun_game {
+        i32::from(row.mode_level) + 1
+    } else {
+        row.score.score
+    }
 }
 
 fn localized(strings: Option<&PreparedLocalizedStrings>, key: &str) -> String {
@@ -338,17 +369,11 @@ pub(crate) fn update_scoreboard(
         font,
         cmds: Vec::new(),
     };
+    let gun_game = snap.meta.mode == ModeId::GunGame;
 
     for (x, w, key) in COLUMNS {
-        draw.text(
-            LIST_X + x,
-            77.0,
-            w,
-            scale,
-            true,
-            &localized(loc, key),
-            WHITE,
-        );
+        let header = column_header(gun_game, key, localized(loc, key));
+        draw.text(LIST_X + x, 77.0, w, scale, true, &header, WHITE);
     }
     let mut y = 82.0;
     for team in teams {
@@ -404,7 +429,7 @@ pub(crate) fn update_scoreboard(
                 draw.picture(LIST_X + 228.0, y, row_h, row_h, "hud_status_dead", WHITE);
             }
             let values = [
-                row.score.score,
+                primary_value(row, gun_game),
                 row.score.kills,
                 row.score.assists,
                 row.score.deaths,
@@ -455,5 +480,81 @@ pub(crate) fn update_scoreboard(
     let (quads, _) = tessellate_fonts(&list, &fonts);
     if !quads.is_empty() {
         pass.scoreboard = TessJob::Quads(quads);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sim::{ClientId, ClientSnapshotMeta, Snapshot, SnapshotMeta, Tick};
+
+    fn parsed(client_ids: &[i32]) -> ParsedScores {
+        let mut parsed = ParsedScores::default();
+        parsed.num = client_ids.len();
+        for (entry, client) in parsed.scores.iter_mut().zip(client_ids) {
+            entry.client = *client;
+        }
+        parsed
+    }
+
+    fn snapshot(mode: ModeId, rows: &[(i32, i32, i32, u8)]) -> Snapshot {
+        let mut meta = SnapshotMeta {
+            mode,
+            ..Default::default()
+        };
+        meta.clients = rows
+            .iter()
+            .map(|(client, kills, deaths, mode_level)| {
+                (
+                    ClientId(*client as u32),
+                    ClientSnapshotMeta {
+                        kills: *kills,
+                        score: *kills,
+                        deaths: *deaths,
+                        mode_level: *mode_level,
+                        ..Default::default()
+                    },
+                )
+            })
+            .collect();
+        Snapshot {
+            tick: Tick(0),
+            players: Vec::new(),
+            projectiles: Vec::new(),
+            meta,
+        }
+    }
+
+    #[test]
+    fn gun_game_orders_by_weapon_level_then_kills() {
+        let snap = snapshot(
+            ModeId::GunGame,
+            &[(1, 3, 1, 2), (2, 0, 0, 5), (3, 4, 2, 5), (4, 20, 3, 1)],
+        );
+        let rows = rows_from_parsed(&snap, &parsed(&[1, 2, 3, 4]));
+        assert_eq!(
+            rows.iter().map(|row| row.score.client).collect::<Vec<_>>(),
+            [3, 2, 1, 4]
+        );
+        assert_eq!(primary_value(&rows[0], true), 6);
+        assert_eq!(column_header(true, "CGAME_SB_SCORE", "SCORE".into()), "LVL");
+        assert_eq!(
+            column_header(false, "CGAME_SB_SCORE", "SCORE".into()),
+            "SCORE"
+        );
+    }
+
+    #[test]
+    fn other_modes_keep_score_order_and_column() {
+        let snap = snapshot(
+            ModeId::FreeForAll,
+            &[(1, 9, 1, 2), (2, 1, 0, 5), (3, 3, 2, 5)],
+        );
+        let rows = rows_from_parsed(&snap, &parsed(&[1, 2, 3]));
+        assert_eq!(
+            rows.iter().map(|row| row.score.client).collect::<Vec<_>>(),
+            [1, 3, 2]
+        );
+        assert_eq!(primary_value(&rows[0], false), 9);
     }
 }

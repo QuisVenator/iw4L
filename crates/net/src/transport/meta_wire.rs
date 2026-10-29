@@ -1058,6 +1058,7 @@ fn encode_client_meta(out: &mut WireWriter, meta: &ClientSnapshotMeta) {
     out.put_i32(meta.ammo_stock);
     out.put_i32(meta.score);
     out.put_i32(meta.kills);
+    out.put_u8(meta.mode_level);
     out.put_i32(meta.deaths);
     out.put_i32(meta.kill_streak);
     out.put_u8(meta.radar.wire_tag());
@@ -1280,6 +1281,7 @@ fn decode_client_meta(input: &mut WireReader<'_>) -> Result<ClientSnapshotMeta, 
     let ammo_stock = input.get_i32()?;
     let score = input.get_i32()?;
     let kills = input.get_i32()?;
+    let mode_level = input.get_u8()?;
     let deaths = input.get_i32()?;
     let kill_streak = input.get_i32()?;
     let radar = sim::RadarMode::from_wire_tag(input.get_u8()?)
@@ -1498,6 +1500,7 @@ fn decode_client_meta(input: &mut WireReader<'_>) -> Result<ClientSnapshotMeta, 
         ammo_stock,
         score,
         kills,
+        mode_level,
         deaths,
         kill_streak,
         radar,

@@ -34,9 +34,16 @@ ordering, optional score/time rule overrides, and a display token without
 adding another `IW4L_*` environment flag.
 
 A normal kill advances the killer one level. A melee kill does not advance the
-killer; instead the victim drops one level, stopping at the first weapon. The
-victim receives the correct weapon on their next spawn. Suicides do not change
-anyone's level. Killing with the final weapon starts the end-of-match sequence.
+killer; instead the victim drops one level, stopping at the first weapon.
+Suicides also drop the player one level, including unattributed environmental
+deaths such as falling. Demoted players receive the correct weapon on their
+next spawn. Killing with the final weapon starts the end-of-match sequence.
+
+Killstreaks and dropped-weapon pickups are disabled for the whole match,
+including debug-granted streaks. Players can still retrieve ammunition for the
+weapon they already hold. The in-game scoreboard keeps the kills column,
+replaces the score column with the player's weapon level, and sorts players by
+weapon level and then kills.
 
 Lock-on-only launchers are excluded: the IW4 Stinger and Javelin and the T6
 FHJ-18 AA cannot fire until a lock exists, which makes them unsuitable for the

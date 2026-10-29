@@ -1107,6 +1107,10 @@ fn apply_action(
         } => {
             if !world.bootstrap_ref().allow_debug_actions
                 || !world
+                    .ecs()
+                    .resource::<crate::script::MatchScript>()
+                    .killstreaks_enabled
+                || !world
                     .client_meta(id)
                     .is_some_and(|m| m.lifecycle == ClientLifecycle::Alive)
             {

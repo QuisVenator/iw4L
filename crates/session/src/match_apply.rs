@@ -606,6 +606,8 @@ pub fn apply_prepared_match(
             script_level,
         )
         .map_err(|e| script_refusal(&zone, gametype, "install", &e))?;
+        sim.set_killstreaks_enabled(mode.hooks().killstreaks_enabled);
+        sim.set_weapon_pickups_enabled(mode.hooks().weapon_pickups_enabled);
         if *role == frame::RuntimeRole::Listen
             && let (Some(account), Some(local)) = (account.as_ref(), local.as_ref())
         {
