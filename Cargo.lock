@@ -7177,6 +7177,7 @@ dependencies = [
  "bevy",
  "diag",
  "frame",
+ "gamemode_iw4",
  "net",
  "session",
  "sim",

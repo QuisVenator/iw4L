@@ -1,89 +1,108 @@
 main()
 {
     level.scoreLimitOverride = true;
+    level.gunGameProgression = tolower(getdvar("scr_gg_progression"));
+    if (level.gunGameProgression != "random")
+    {
+        level.gunGameProgression = "ordered";
+    }
+    level.gunGameRandomScope = tolower(getdvar("scr_gg_random_scope"));
+    if (level.gunGameRandomScope != "perplayer")
+    {
+        level.gunGameRandomScope = "shared";
+    }
+    level.gunGameFinalWeapon = tolower(getdvar("scr_gg_final"));
+    if (level.gunGameFinalWeapon == "")
+    {
+        level.gunGameFinalWeapon = "t6:weapon/hatchet_mp";
+    }
+    level.gunGamePool = [];
     level.gunGameWeapons = [];
-    level.gunGameWeapons[0] = "iw4:weapon/usp_mp";
-    level.gunGameWeapons[1] = "iw4:weapon/beretta_mp";
-    level.gunGameWeapons[2] = "iw4:weapon/deserteagle_mp";
-    level.gunGameWeapons[3] = "iw4:weapon/coltanaconda_mp";
-    level.gunGameWeapons[4] = "t6:weapon/beretta93r_mp";
-    level.gunGameWeapons[5] = "t6:weapon/fiveseven_mp";
-    level.gunGameWeapons[6] = "t6:weapon/fnp45_mp";
-    level.gunGameWeapons[7] = "t6:weapon/kard_mp";
-    level.gunGameWeapons[8] = "iw4:weapon/pp2000_mp";
-    level.gunGameWeapons[9] = "iw4:weapon/tmp_mp";
-    level.gunGameWeapons[10] = "iw4:weapon/glock_mp";
-    level.gunGameWeapons[11] = "iw4:weapon/beretta393_mp";
-    level.gunGameWeapons[12] = "iw4:weapon/mp5k_mp";
-    level.gunGameWeapons[13] = "iw4:weapon/uzi_mp";
-    level.gunGameWeapons[14] = "iw4:weapon/p90_mp";
-    level.gunGameWeapons[15] = "iw4:weapon/kriss_mp";
-    level.gunGameWeapons[16] = "iw4:weapon/ump45_mp";
-    level.gunGameWeapons[17] = "t6:weapon/evoskorpion_mp";
-    level.gunGameWeapons[18] = "t6:weapon/mp7_mp";
-    level.gunGameWeapons[19] = "t6:weapon/pdw57_mp";
-    level.gunGameWeapons[20] = "t6:weapon/qcw05_mp";
-    level.gunGameWeapons[21] = "t6:weapon/vector_mp";
-    level.gunGameWeapons[22] = "iw4:weapon/ranger_mp";
-    level.gunGameWeapons[23] = "iw4:weapon/model1887_mp";
-    level.gunGameWeapons[24] = "iw4:weapon/m1014_mp";
-    level.gunGameWeapons[25] = "iw4:weapon/spas12_mp";
-    level.gunGameWeapons[26] = "iw4:weapon/striker_mp";
-    level.gunGameWeapons[27] = "iw4:weapon/aa12_mp";
-    level.gunGameWeapons[28] = "t6:weapon/870mcs_mp";
-    level.gunGameWeapons[29] = "t6:weapon/judge_mp";
-    level.gunGameWeapons[30] = "t6:weapon/ksg_mp";
-    level.gunGameWeapons[31] = "t6:weapon/saiga12_mp";
-    level.gunGameWeapons[32] = "t6:weapon/srm1216_mp";
-    level.gunGameWeapons[33] = "iw4:weapon/m4_mp";
-    level.gunGameWeapons[34] = "iw4:weapon/famas_mp";
-    level.gunGameWeapons[35] = "iw4:weapon/scar_mp";
-    level.gunGameWeapons[36] = "iw4:weapon/tavor_mp";
-    level.gunGameWeapons[37] = "iw4:weapon/fal_mp";
-    level.gunGameWeapons[38] = "iw4:weapon/m16_mp";
-    level.gunGameWeapons[39] = "iw4:weapon/masada_mp";
-    level.gunGameWeapons[40] = "iw4:weapon/fn2000_mp";
-    level.gunGameWeapons[41] = "iw4:weapon/ak47_mp";
-    level.gunGameWeapons[42] = "t6:weapon/an94_mp";
-    level.gunGameWeapons[43] = "t6:weapon/hk416_mp";
-    level.gunGameWeapons[44] = "t6:weapon/insas_mp";
-    level.gunGameWeapons[45] = "t6:weapon/sa58_mp";
-    level.gunGameWeapons[46] = "t6:weapon/saritch_mp";
-    level.gunGameWeapons[47] = "t6:weapon/scar_mp";
-    level.gunGameWeapons[48] = "t6:weapon/sig556_mp";
-    level.gunGameWeapons[49] = "t6:weapon/tar21_mp";
-    level.gunGameWeapons[50] = "t6:weapon/type95_mp";
-    level.gunGameWeapons[51] = "t6:weapon/xm8_mp";
-    level.gunGameWeapons[52] = "iw4:weapon/rpd_mp";
-    level.gunGameWeapons[53] = "iw4:weapon/sa80_mp";
-    level.gunGameWeapons[54] = "iw4:weapon/mg4_mp";
-    level.gunGameWeapons[55] = "iw4:weapon/m240_mp";
-    level.gunGameWeapons[56] = "iw4:weapon/aug_mp";
-    level.gunGameWeapons[57] = "t6:weapon/hamr_mp";
-    level.gunGameWeapons[58] = "t6:weapon/lsat_mp";
-    level.gunGameWeapons[59] = "t6:weapon/mk48_mp";
-    level.gunGameWeapons[60] = "t6:weapon/qbb95_mp";
-    level.gunGameWeapons[61] = "iw4:weapon/m21_mp";
-    level.gunGameWeapons[62] = "t6:weapon/svu_mp";
-    level.gunGameWeapons[63] = "iw4:weapon/wa2000_mp";
-    level.gunGameWeapons[64] = "iw4:weapon/barrett_mp";
-    level.gunGameWeapons[65] = "iw4:weapon/cheytac_mp";
-    level.gunGameWeapons[66] = "t6:weapon/as50_mp";
-    level.gunGameWeapons[67] = "t6:weapon/dsr50_mp";
-    level.gunGameWeapons[68] = "t6:weapon/ballista_mp";
-    level.gunGameWeapons[69] = "iw4:weapon/m79_mp";
-    level.gunGameWeapons[70] = "iw4:weapon/at4_mp";
-    level.gunGameWeapons[71] = "iw4:weapon/rpg_mp";
-    level.gunGameWeapons[72] = "t6:weapon/m32_mp";
-    level.gunGameWeapons[73] = "t6:weapon/smaw_mp";
-    level.gunGameWeapons[74] = "t6:weapon/usrpg_mp";
-    level.gunGameWeapons[75] = "t6:weapon/crossbow_mp";
-    level.gunGameWeapons[76] = "iw4:weapon/riotshield_mp";
-    level.gunGameWeapons[77] = "t6:weapon/riotshield_mp";
-    level.gunGameWeapons[78] = "iw4:weapon/throwingknife_mp";
-    level.gunGameWeapons[79] = "t6:weapon/knife_ballistic_mp";
-    level.gunGameWeapons[80] = "t6:weapon/hatchet_mp";
+    if (level.gunGameProgression == "random")
+    {
+        level.gunGamePool = gunGameParseWeapons(getdvar("scr_gg_pool"));
+        if (level.gunGamePool.size == 0)
+        {
+            level.gunGamePool = gunGameFallbackWeapons();
+        }
+        if (level.gunGameRandomScope == "shared")
+        {
+            level.gunGameWeapons = gunGameRandomSequence();
+        }
+    }
+    else
+    {
+        level.gunGameWeapons = gunGameParseWeapons(getdvar("scr_gg_weapons"));
+        if (level.gunGameWeapons.size == 0)
+        {
+            level.gunGameWeapons = gunGameFallbackWeapons();
+        }
+    }
     level thread gunGameConnect();
+}
+
+gunGameFallbackWeapons()
+{
+    weapons = [];
+    weapons[0] = "iw4:weapon/usp_mp";
+    weapons[1] = "t6:weapon/hatchet_mp";
+    return weapons;
+}
+
+gunGameParseWeapons(text)
+{
+    weapons = [];
+    tokens = strtok(text, ",; ");
+    for (i = 0; i < tokens.size; i++)
+    {
+        weapon = tolower(tokens[i]);
+        if (weapon != "")
+        {
+            weapons[weapons.size] = weapon;
+        }
+    }
+    return weapons;
+}
+
+gunGameRandomSequence()
+{
+    pool = [];
+    for (i = 0; i < level.gunGamePool.size; i++)
+    {
+        if (level.gunGamePool[i] != level.gunGameFinalWeapon)
+        {
+            pool[pool.size] = level.gunGamePool[i];
+        }
+    }
+    weapons = [];
+    count = pool.size;
+    while (count > 0)
+    {
+        index = randomint(count);
+        weapons[weapons.size] = pool[index];
+        count--;
+        pool[index] = pool[count];
+    }
+    weapons[weapons.size] = level.gunGameFinalWeapon;
+    return weapons;
+}
+
+gunGameLevelCount(player)
+{
+    if (isdefined(player.gunGameWeapons))
+    {
+        return player.gunGameWeapons.size;
+    }
+    return level.gunGameWeapons.size;
+}
+
+gunGameWeaponAt(player, index)
+{
+    if (isdefined(player.gunGameWeapons))
+    {
+        return player.gunGameWeapons[index];
+    }
+    return level.gunGameWeapons[index];
 }
 
 gunGameConnect()
@@ -93,6 +112,10 @@ gunGameConnect()
     {
         level waittill("connected", player);
         player.gunGameLevel = 0;
+        if (level.gunGameProgression == "random" && level.gunGameRandomScope == "perplayer")
+        {
+            player.gunGameWeapons = gunGameRandomSequence();
+        }
         player thread gunGameSpawn();
         player thread gunGameDeath();
         player thread gunGameAdvance();
@@ -120,10 +143,11 @@ gunGameDeath()
         self waittill("death", attacker, means);
         if (!isdefined(attacker) || attacker == self || (isdefined(means) && (means == "MOD_SUICIDE" || means == "MOD_FALLING")))
         {
+            levelCount = gunGameLevelCount(self);
             if (self.gunGameLevel > 0)
             {
                 self.gunGameLevel--;
-                self iprintln("Gun Game: suicide demoted you to " + (self.gunGameLevel + 1) + " / " + level.gunGameWeapons.size);
+                self iprintln("Gun Game: suicide demoted you to " + (self.gunGameLevel + 1) + " / " + levelCount);
             }
             else
             {
@@ -135,14 +159,15 @@ gunGameDeath()
             if (isdefined(means) && means == "MOD_MELEE")
             {
                 previousLevel = self.gunGameLevel;
+                levelCount = gunGameLevelCount(self);
                 if (self.gunGameLevel > 0)
                 {
                     self.gunGameLevel--;
-                    self iprintln("Gun Game: melee kill demoted you to " + (self.gunGameLevel + 1) + " / " + level.gunGameWeapons.size);
+                    self iprintln("Gun Game: melee kill demoted you to " + (self.gunGameLevel + 1) + " / " + levelCount);
                 }
                 attacker iprintln("Gun Game: you stay; opponent " + (previousLevel + 1) + " -> " + (self.gunGameLevel + 1));
             }
-            else if (attacker.gunGameLevel < level.gunGameWeapons.size - 1)
+            else if (attacker.gunGameLevel < gunGameLevelCount(attacker) - 1)
             {
                 attacker.gunGameLevel++;
                 attacker gunGameEquip();
@@ -166,7 +191,7 @@ gunGameAdvance()
         {
             self.gunGameLevel = 0;
         }
-        if (self.gunGameLevel < level.gunGameWeapons.size - 1)
+        if (self.gunGameLevel < gunGameLevelCount(self) - 1)
         {
             self.gunGameLevel++;
             self gunGameEquip();
@@ -180,10 +205,20 @@ gunGameAdvance()
 
 gunGameEquip()
 {
-    weapon = level.gunGameWeapons[self.gunGameLevel];
+    levelCount = gunGameLevelCount(self);
+    if (levelCount <= 0)
+    {
+        return;
+    }
+    index = self.gunGameLevel;
+    if (index >= levelCount)
+    {
+        index = levelCount - 1;
+    }
+    weapon = gunGameWeaponAt(self, index);
     self takeallweapons();
     self giveweapon(weapon);
     self givemaxammo(weapon);
     self switchtoweapon(weapon);
-    self iprintln("Gun Game: " + (self.gunGameLevel + 1) + " / " + level.gunGameWeapons.size + " " + weapon);
+    self iprintln("Gun Game: " + (self.gunGameLevel + 1) + " / " + levelCount + " " + weapon);
 }

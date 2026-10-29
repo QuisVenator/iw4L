@@ -11,6 +11,7 @@ pub mod ffa;
 pub mod gamelogic;
 pub mod gaps;
 pub mod globallogic;
+pub mod gun_game;
 pub mod kind;
 pub mod load;
 pub mod mode;

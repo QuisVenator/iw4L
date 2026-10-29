@@ -1,10 +1,10 @@
 # Gun Game progression
 
 `make gun-game` starts the `gun` game mode, a free-for-all with an 81-level
-progression drawn from the weapons available in the installed IW4 and T6
-content. The same mode is selectable as `GUN GAME` in the host lobby. The host
-UI and lobby protocol use the token `gun`; retail scripts still run the `dm`
-base rules underneath. Levels rise from pistols
+default progression drawn from the weapons available in the installed IW4 and
+T6 content. The same mode is selectable as `GUN GAME` in the host lobby. The
+host UI and lobby protocol use the token `gun`; retail scripts still run the
+`dm` base rules underneath. Levels rise from pistols
 through stronger primaries, then reverse into precision weapons, launchers,
 special weapons and finally throwing weapons.
 
@@ -25,6 +25,35 @@ special weapons and finally throwing weapons.
 The same script names occur in both games for SCAR-H, TAR-21 and the Riot
 Shield. Levels use `iw4:weapon/...` or `t6:weapon/...` so each entry resolves to
 the intended game rather than the first matching script name.
+
+## Host setup
+
+In the host lobby, open `GAME SETUP` and then `GUN GAME SETUP`. The menu exposes
+two progression modes:
+
+- `ORDERED` plays the weapon list from first to last. This is the default and is
+  seeded with the 81-level rotation above. Duplicate weapons are allowed.
+- `RANDOM` chooses every weapon in the pool once, shuffles the choices, and
+  always appends the configured `FINAL WEAPON` last. If the final weapon also
+  appears in the pool, it is omitted from the shuffled portion so it cannot be
+  drawn twice.
+
+`RANDOM LISTS` controls whether all players receive the same shuffle (`SHARED`)
+or an independent shuffle at connect time (`PER PLAYER`). The default pool is
+all 81 default weapons except the final Hatchet; the default final weapon is
+`t6:weapon/hatchet_mp`.
+
+Weapon IDs are case-insensitive. Enter either the full form
+`iw4:weapon/name_mp` or `t6:weapon/name_mp`, or the short form
+`iw4:name_mp` or `t6:name_mp`. Separate entries with commas, semicolons, or
+spaces. `APPLY` validates and canonicalizes the setup; `RESET DEFAULTS`
+restores the ordered 81-level rotation. The lists are limited to 128 entries
+and 4096 bytes.
+
+The setup is stored in the `scr_gg_progression`, `scr_gg_random_scope`,
+`scr_gg_weapons`, `scr_gg_pool`, and `scr_gg_final` dvars, so it is sent with
+the host rules. Direct launches that do not provide them receive the same
+defaults.
 
 Gun Game is registered in `gamemode_iw4::ModeId` as its own mode with
 `GameModeKind::FreeForAll` as its base rules. Its GSC module is an

@@ -1247,6 +1247,16 @@ fn preflight_match_install(
     script_dvars.push(("mapname".into(), zone.to_owned()));
     script_dvars.push(("g_gametype".into(), gametype.to_owned()));
     script_dvars.push(("sv_maxclients".into(), "18".into()));
+    if mode == gamemode_iw4::ModeId::GunGame {
+        for (name, value) in gun_game_default_dvars() {
+            if !script_dvars
+                .iter()
+                .any(|(set, _)| set.eq_ignore_ascii_case(&name))
+            {
+                script_dvars.push((name, value));
+            }
+        }
+    }
     for (name, value) in rules.map_or(&[][..], |rules| &rules.0) {
         match script_dvars
             .iter_mut()
@@ -1342,6 +1352,35 @@ fn preflight_match_install(
         authority_models,
         model_spawns,
     })
+}
+
+fn gun_game_default_dvars() -> Vec<(String, String)> {
+    let ordered = gamemode_iw4::gun_game::DEFAULT_WEAPONS.join(", ");
+    let pool = gamemode_iw4::gun_game::DEFAULT_WEAPONS
+        .iter()
+        .copied()
+        .filter(|weapon| *weapon != gamemode_iw4::gun_game::DEFAULT_FINAL_WEAPON)
+        .collect::<Vec<_>>()
+        .join(", ");
+    [
+        (
+            gamemode_iw4::gun_game::PROGRESSION_DVAR,
+            gamemode_iw4::gun_game::DEFAULT_PROGRESSION,
+        ),
+        (
+            gamemode_iw4::gun_game::RANDOM_SCOPE_DVAR,
+            gamemode_iw4::gun_game::DEFAULT_RANDOM_SCOPE,
+        ),
+        (gamemode_iw4::gun_game::WEAPONS_DVAR, ordered.as_str()),
+        (gamemode_iw4::gun_game::POOL_DVAR, pool.as_str()),
+        (
+            gamemode_iw4::gun_game::FINAL_WEAPON_DVAR,
+            gamemode_iw4::gun_game::DEFAULT_FINAL_WEAPON,
+        ),
+    ]
+    .into_iter()
+    .map(|(name, value)| (name.to_owned(), value.to_owned()))
+    .collect()
 }
 
 pub fn install_script_model_id(content: asset_world::ScriptModelId) -> sim::ScriptModelId {
