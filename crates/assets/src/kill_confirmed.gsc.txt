@@ -1,0 +1,215 @@
+main()
+{
+    level.kcScoreLimit = getDvarInt("scr_kc_score_limit");
+    if (level.kcScoreLimit < 1)
+        level.kcScoreLimit = 65;
+    else if (level.kcScoreLimit > 255)
+        level.kcScoreLimit = 255;
+
+    level.kcTimeLimit = getDvarInt("scr_kc_time_limit");
+    if (level.kcTimeLimit < 1)
+        level.kcTimeLimit = 5;
+    else if (level.kcTimeLimit > 1440)
+        level.kcTimeLimit = 1440;
+
+    level.kcTagLifetime = getDvarFloat("scr_kc_tag_lifetime");
+    if (level.kcTagLifetime < 1)
+        level.kcTagLifetime = 30;
+    else if (level.kcTagLifetime > 600)
+        level.kcTagLifetime = 600;
+
+    setDvar("scr_war_scorelimit", level.kcScoreLimit);
+    setDvar("scr_war_timelimit", level.kcTimeLimit);
+
+    level.kcTags = [];
+    level.onNormalDeath = ::onNormalDeath;
+    level thread kcConnect();
+    level thread kcReconcile();
+}
+
+onNormalDeath(victim, attacker, lifeId)
+{
+    if (!isDefined(victim) || !isPlayer(victim))
+        return;
+    if (!isDefined(attacker) || !isPlayer(attacker) || attacker == victim)
+        return;
+    if (!isDefined(victim.sessionteam) || !isDefined(attacker.sessionteam))
+        return;
+    if (victim.sessionteam == attacker.sessionteam)
+        return;
+
+    level thread kcDropTag(victim, attacker);
+}
+
+kcConnect()
+{
+    level endon("game_ended");
+    for (;;)
+    {
+        level waittill("connected", player);
+        kcInitPlayer(player);
+    }
+}
+
+kcReconcile()
+{
+    level endon("game_ended");
+    for (;;)
+    {
+        wait 0.5;
+        foreach (player in level.players)
+        {
+            if (isPlayer(player))
+                kcInitPlayer(player);
+        }
+    }
+}
+
+kcInitPlayer(player)
+{
+    if (!isDefined(player.kcStarted))
+    {
+        player.kcStarted = true;
+        player.modeLevel = 0;
+    }
+    else if (!isDefined(player.modeLevel))
+    {
+        player.modeLevel = 0;
+    }
+}
+
+kcDropTag(victim, attacker)
+{
+    level endon("game_ended");
+
+    guid = victim getGuid();
+    if (!isDefined(guid) || guid == "")
+        return;
+
+    if (isDefined(level.kcTags[guid]))
+        kcRemoveTag(level.kcTags[guid]);
+
+    triggerOrigin = victim.origin + (0, 0, 14);
+    visualOrigin = victim.origin + (0, 0, 32);
+    friendly = spawn("script_model", visualOrigin);
+    friendly setmodel("iw4l_kc_dogtag_friendly");
+    friendly.angles = (0, randomint(360), 0);
+    friendly hide();
+
+    enemy = spawn("script_model", visualOrigin);
+    enemy setmodel("iw4l_kc_dogtag_enemy");
+    enemy.angles = friendly.angles;
+    enemy hide();
+
+    trigger = spawn("trigger_radius", triggerOrigin, 0, 32, 32);
+
+    tag = spawnStruct();
+    tag.guid = guid;
+    tag.origin = visualOrigin;
+    tag.victimTeam = victim.sessionteam;
+    tag.attacker = attacker;
+    tag.friendly = friendly;
+    tag.enemy = enemy;
+    tag.trigger = trigger;
+    tag.active = true;
+
+    level.kcTags[guid] = tag;
+    trigger thread kcWatchTag(tag);
+    trigger thread kcUpdateTagVisibility(tag);
+    level thread kcExpireTag(tag);
+}
+
+kcUpdateTagVisibility(tag)
+{
+    self endon("game_ended");
+    self endon("reset");
+
+    for (;;)
+    {
+        if (!isDefined(tag) || !tag.active)
+            return;
+
+        tag.friendly hide();
+        tag.enemy hide();
+        foreach (player in level.players)
+        {
+            if (!isPlayer(player))
+                continue;
+            if (player.sessionteam == tag.victimTeam)
+                tag.friendly showToPlayer(player);
+            else
+                tag.enemy showToPlayer(player);
+        }
+        wait 0.25;
+    }
+}
+
+kcWatchTag(tag)
+{
+    self endon("game_ended");
+    self endon("death");
+    self endon("reset");
+
+    for (;;)
+    {
+        self waittill("trigger", player);
+        if (!isDefined(tag) || !tag.active)
+            return;
+        if (!isDefined(player) || !isPlayer(player) || !isAlive(player))
+            continue;
+
+        if (player.sessionteam == tag.victimTeam)
+        {
+            if (isDefined(tag.attacker))
+                tag.attacker iprintln("Kill Confirmed: your kill was denied.");
+            tag.active = false;
+            kcCleanupTag(tag);
+            return;
+        }
+
+        tag.active = false;
+        tags = 1;
+        if (isDefined(player.modeLevel) && player.modeLevel > 0)
+            tags = player.modeLevel + 1;
+        if (tags > 255)
+            tags = 255;
+        player.modeLevel = tags;
+        player maps\mp\gametypes\_gamescore::giveTeamScoreForObjective(player.sessionteam, 1);
+        player iprintln("Kill Confirmed: tag collected.");
+        kcCleanupTag(tag);
+        return;
+    }
+}
+
+kcExpireTag(tag)
+{
+    level endon("game_ended");
+    wait level.kcTagLifetime;
+    kcRemoveTag(tag);
+}
+
+kcRemoveTag(tag)
+{
+    if (!isDefined(tag) || !tag.active)
+        return;
+    tag.active = false;
+    kcCleanupTag(tag);
+}
+
+kcCleanupTag(tag)
+{
+    if (isDefined(level.kcTags[tag.guid]) && level.kcTags[tag.guid] == tag)
+        level.kcTags[tag.guid] = undefined;
+    if (isDefined(tag.friendly))
+    {
+        tag.friendly hide();
+        tag.friendly delete();
+    }
+    if (isDefined(tag.enemy))
+    {
+        tag.enemy hide();
+        tag.enemy delete();
+    }
+    if (isDefined(tag.trigger))
+        tag.trigger delete();
+}

@@ -127,6 +127,112 @@ pub fn host_rules(dvars: &UiMenuDvars) -> frame::HostMatchRules {
     )
 }
 
+pub fn seed_kill_confirmed(dvars: &mut UiMenuDvars) {
+    for (name, value) in default_kill_confirmed_values() {
+        if dvars.get(name).is_none() {
+            dvars.set(name, value);
+        }
+    }
+    if dvars.get("ui_kc_status").is_none() {
+        dvars.set("ui_kc_status", "");
+    }
+}
+
+pub fn reset_kill_confirmed(dvars: &mut UiMenuDvars) {
+    for (name, value) in default_kill_confirmed_values() {
+        dvars.set(name, value);
+    }
+    dvars.set(
+        "ui_kc_status",
+        "Reset Kill Confirmed to 65 tags, 5 minutes, and 30 second tags.",
+    );
+}
+
+pub fn normalize_kill_confirmed(dvars: &mut UiMenuDvars) -> Result<String, String> {
+    let score_limit = parse_kill_confirmed_number(
+        dvars,
+        gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR,
+        gamemode_iw4::kill_confirmed::DEFAULT_SCORE_LIMIT,
+        gamemode_iw4::kill_confirmed::MIN_SCORE_LIMIT,
+        gamemode_iw4::kill_confirmed::MAX_SCORE_LIMIT,
+        "confirmed kill limit",
+    )?;
+    let time_limit = parse_kill_confirmed_number(
+        dvars,
+        gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR,
+        gamemode_iw4::kill_confirmed::DEFAULT_TIME_LIMIT_MINUTES,
+        gamemode_iw4::kill_confirmed::MIN_TIME_LIMIT_MINUTES,
+        gamemode_iw4::kill_confirmed::MAX_TIME_LIMIT_MINUTES,
+        "round time in minutes",
+    )?;
+    let tag_lifetime = parse_kill_confirmed_number(
+        dvars,
+        gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR,
+        gamemode_iw4::kill_confirmed::DEFAULT_TAG_LIFETIME_SECONDS,
+        gamemode_iw4::kill_confirmed::MIN_TAG_LIFETIME_SECONDS,
+        gamemode_iw4::kill_confirmed::MAX_TAG_LIFETIME_SECONDS,
+        "dog-tag lifetime in seconds",
+    )?;
+
+    dvars.set(
+        gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR,
+        score_limit.to_string(),
+    );
+    dvars.set(
+        gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR,
+        time_limit.to_string(),
+    );
+    dvars.set(
+        gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR,
+        tag_lifetime.to_string(),
+    );
+    let summary = format!(
+        "Saved Kill Confirmed: {score_limit} tags to win, {time_limit} minute round, {tag_lifetime} second tags."
+    );
+    dvars.set("ui_kc_status", &summary);
+    Ok(summary)
+}
+
+fn default_kill_confirmed_values() -> [(&'static str, String); 3] {
+    [
+        (
+            gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR,
+            gamemode_iw4::kill_confirmed::DEFAULT_SCORE_LIMIT.to_string(),
+        ),
+        (
+            gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR,
+            gamemode_iw4::kill_confirmed::DEFAULT_TIME_LIMIT_MINUTES.to_string(),
+        ),
+        (
+            gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR,
+            gamemode_iw4::kill_confirmed::DEFAULT_TAG_LIFETIME_SECONDS.to_string(),
+        ),
+    ]
+}
+
+fn parse_kill_confirmed_number(
+    dvars: &UiMenuDvars,
+    name: &str,
+    default: u32,
+    min: u32,
+    max: u32,
+    label: &str,
+) -> Result<u32, String> {
+    let value = dvars.get(name).unwrap_or_default().trim();
+    if value.is_empty() {
+        return Ok(default);
+    }
+    let number = value
+        .parse::<u32>()
+        .map_err(|_| format!("The {label} must be a whole number, not `{value}`"))?;
+    if !(min..=max).contains(&number) {
+        return Err(format!(
+            "The {label} must be between {min} and {max}, not {number}"
+        ));
+    }
+    Ok(number)
+}
+
 pub fn seed_gun_game(dvars: &mut UiMenuDvars) {
     for (name, value) in default_gun_game_values() {
         if dvars.get(name).is_none() {
@@ -335,6 +441,55 @@ mod tests {
         let mut dvars = UiMenuDvars::default();
         seed_gun_game(&mut dvars);
         dvars
+    }
+
+    fn kill_confirmed_dvars() -> UiMenuDvars {
+        let mut dvars = UiMenuDvars::default();
+        seed_kill_confirmed(&mut dvars);
+        dvars
+    }
+
+    #[test]
+    fn kill_confirmed_defaults_and_reset_are_canonical() {
+        let mut dvars = kill_confirmed_dvars();
+        assert_eq!(
+            normalize_kill_confirmed(&mut dvars).as_deref(),
+            Ok("Saved Kill Confirmed: 65 tags to win, 5 minute round, 30 second tags.")
+        );
+        dvars.set(gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR, "90");
+        dvars.set(gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR, "12");
+        dvars.set(gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR, "45");
+        reset_kill_confirmed(&mut dvars);
+        assert_eq!(
+            dvars.get(gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR),
+            Some("65")
+        );
+        assert_eq!(
+            dvars.get(gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR),
+            Some("5")
+        );
+        assert_eq!(
+            dvars.get(gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR),
+            Some("30")
+        );
+    }
+
+    #[test]
+    fn kill_confirmed_values_are_range_checked() {
+        let mut dvars = kill_confirmed_dvars();
+        dvars.set(gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR, "0");
+        assert!(
+            normalize_kill_confirmed(&mut dvars)
+                .unwrap_err()
+                .contains("between 1 and 255")
+        );
+        dvars.set(gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR, "65");
+        dvars.set(gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR, "soon");
+        assert!(
+            normalize_kill_confirmed(&mut dvars)
+                .unwrap_err()
+                .contains("whole number")
+        );
     }
 
     #[test]

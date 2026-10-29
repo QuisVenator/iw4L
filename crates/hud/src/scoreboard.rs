@@ -26,6 +26,7 @@ const LIST_WIDTH: f32 = 500.0;
 const WHITE: [f32; 4] = [1.0; 4];
 const MINE: [f32; 4] = [1.0, 0.8, 0.4, 1.0];
 const GUN_GAME_LEVEL_HEADER: &str = "LVL";
+const KILL_CONFIRMED_TAGS_HEADER: &str = "TAGS";
 const COLUMNS: [(f32, f32, &str); 5] = [
     (248.0, 49.0, "CGAME_SB_SCORE"),
     (297.0, 44.0, "CGAME_SB_KILLS"),
@@ -78,40 +79,42 @@ fn rows_from_parsed(snap: &Snapshot, parsed: &ParsedScores) -> Vec<ScoreboardRow
             ),
         });
     }
-    sort_rows(&mut rows, snap.meta.mode == ModeId::GunGame);
+    sort_rows(&mut rows, snap.meta.mode);
     rows
 }
 
-fn sort_rows(rows: &mut [ScoreboardRow], gun_game: bool) {
-    rows.sort_by(|a, b| {
-        if gun_game {
-            b.mode_level
-                .cmp(&a.mode_level)
-                .then(b.score.kills.cmp(&a.score.kills))
-                .then(a.score.deaths.cmp(&b.score.deaths))
-                .then(a.score.client.cmp(&b.score.client))
-        } else {
-            b.score
-                .score
-                .cmp(&a.score.score)
-                .then(a.score.deaths.cmp(&b.score.deaths))
-        }
+fn sort_rows(rows: &mut [ScoreboardRow], mode: ModeId) {
+    rows.sort_by(|a, b| match mode {
+        ModeId::GunGame | ModeId::KillConfirmed => b
+            .mode_level
+            .cmp(&a.mode_level)
+            .then(b.score.kills.cmp(&a.score.kills))
+            .then(a.score.deaths.cmp(&b.score.deaths))
+            .then(a.score.client.cmp(&b.score.client)),
+        _ => b
+            .score
+            .score
+            .cmp(&a.score.score)
+            .then(a.score.deaths.cmp(&b.score.deaths)),
     });
 }
 
-fn column_header(gun_game: bool, key: &str, localized: String) -> String {
-    if gun_game && key == "CGAME_SB_SCORE" {
-        GUN_GAME_LEVEL_HEADER.to_owned()
-    } else {
-        localized
+fn column_header(mode: ModeId, key: &str, localized: String) -> String {
+    if key == "CGAME_SB_SCORE" {
+        match mode {
+            ModeId::GunGame => return GUN_GAME_LEVEL_HEADER.to_owned(),
+            ModeId::KillConfirmed => return KILL_CONFIRMED_TAGS_HEADER.to_owned(),
+            _ => {}
+        }
     }
+    localized
 }
 
-fn primary_value(row: &ScoreboardRow, gun_game: bool) -> i32 {
-    if gun_game {
-        i32::from(row.mode_level) + 1
-    } else {
-        row.score.score
+fn primary_value(row: &ScoreboardRow, mode: ModeId) -> i32 {
+    match mode {
+        ModeId::GunGame => i32::from(row.mode_level) + 1,
+        ModeId::KillConfirmed => i32::from(row.mode_level),
+        _ => row.score.score,
     }
 }
 
@@ -369,10 +372,10 @@ pub(crate) fn update_scoreboard(
         font,
         cmds: Vec::new(),
     };
-    let gun_game = snap.meta.mode == ModeId::GunGame;
+    let mode = snap.meta.mode;
 
     for (x, w, key) in COLUMNS {
-        let header = column_header(gun_game, key, localized(loc, key));
+        let header = column_header(mode, key, localized(loc, key));
         draw.text(LIST_X + x, 77.0, w, scale, true, &header, WHITE);
     }
     let mut y = 82.0;
@@ -429,7 +432,7 @@ pub(crate) fn update_scoreboard(
                 draw.picture(LIST_X + 228.0, y, row_h, row_h, "hud_status_dead", WHITE);
             }
             let values = [
-                primary_value(row, gun_game),
+                primary_value(row, mode),
                 row.score.kills,
                 row.score.assists,
                 row.score.deaths,
@@ -536,11 +539,32 @@ mod tests {
             rows.iter().map(|row| row.score.client).collect::<Vec<_>>(),
             [3, 2, 1, 4]
         );
-        assert_eq!(primary_value(&rows[0], true), 6);
-        assert_eq!(column_header(true, "CGAME_SB_SCORE", "SCORE".into()), "LVL");
+        assert_eq!(primary_value(&rows[0], ModeId::GunGame), 6);
         assert_eq!(
-            column_header(false, "CGAME_SB_SCORE", "SCORE".into()),
+            column_header(ModeId::GunGame, "CGAME_SB_SCORE", "SCORE".into()),
+            "LVL"
+        );
+        assert_eq!(
+            column_header(ModeId::FreeForAll, "CGAME_SB_SCORE", "SCORE".into()),
             "SCORE"
+        );
+    }
+
+    #[test]
+    fn kill_confirmed_orders_by_collected_tags_and_labels_the_column() {
+        let snap = snapshot(
+            ModeId::KillConfirmed,
+            &[(1, 9, 1, 3), (2, 1, 0, 5), (3, 20, 2, 5), (4, 0, 0, 0)],
+        );
+        let rows = rows_from_parsed(&snap, &parsed(&[1, 2, 3, 4]));
+        assert_eq!(
+            rows.iter().map(|row| row.score.client).collect::<Vec<_>>(),
+            [3, 2, 1, 4]
+        );
+        assert_eq!(primary_value(&rows[0], ModeId::KillConfirmed), 5);
+        assert_eq!(
+            column_header(ModeId::KillConfirmed, "CGAME_SB_SCORE", "SCORE".into()),
+            "TAGS"
         );
     }
 
@@ -555,6 +579,6 @@ mod tests {
             rows.iter().map(|row| row.score.client).collect::<Vec<_>>(),
             [1, 3, 2]
         );
-        assert_eq!(primary_value(&rows[0], false), 9);
+        assert_eq!(primary_value(&rows[0], ModeId::FreeForAll), 9);
     }
 }

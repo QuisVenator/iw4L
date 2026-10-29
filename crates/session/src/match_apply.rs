@@ -573,6 +573,7 @@ pub fn apply_prepared_match(
         stage_resource(&mut install, DynEntPhysWorld::default());
         stage_resource(&mut install, DynEntPhysClip(clip.clone()));
         let brush_movers = std::mem::take(&mut authority_models.brush_movers);
+        let (score_limit, time_limit_ms) = bootstrap_limits(mode, kind, &script_dvars);
         let (sim_gap, lock_reasons) = install_clip_and_player(
             &mut sim,
             content,
@@ -594,6 +595,8 @@ pub fn apply_prepared_match(
             host_classes.as_deref(),
             mode,
             kind,
+            score_limit,
+            time_limit_ms,
             allow_debug_actions,
         )?;
         let script_facts = script_install_facts(&zone, gametype, &scripts, script_entries.len());
@@ -1257,6 +1260,16 @@ fn preflight_match_install(
             }
         }
     }
+    if mode == gamemode_iw4::ModeId::KillConfirmed {
+        for (name, value) in kill_confirmed_default_dvars() {
+            if !script_dvars
+                .iter()
+                .any(|(set, _)| set.eq_ignore_ascii_case(&name))
+            {
+                script_dvars.push((name, value));
+            }
+        }
+    }
     for (name, value) in rules.map_or(&[][..], |rules| &rules.0) {
         match script_dvars
             .iter_mut()
@@ -1274,6 +1287,7 @@ fn preflight_match_install(
         );
     }
     script_dvars.extend(script_dvar_overrides());
+    apply_kill_confirmed_dvars(mode, &mut script_dvars);
     let script_entries = startup.entries;
     let authority_models = authority_entity_model_install(&prepared.world);
     let model_spawns = script_model_spawns(&prepared.world.script_model_instances);
@@ -1381,6 +1395,137 @@ fn gun_game_default_dvars() -> Vec<(String, String)> {
     .into_iter()
     .map(|(name, value)| (name.to_owned(), value.to_owned()))
     .collect()
+}
+
+fn kill_confirmed_default_dvars() -> Vec<(String, String)> {
+    let rules = gamemode_iw4::kill_confirmed::Rules::DEFAULT;
+    [
+        (
+            gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR,
+            rules.score_limit.to_string(),
+        ),
+        (
+            gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR,
+            rules.time_limit_minutes.to_string(),
+        ),
+        (
+            gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR,
+            rules.tag_lifetime_seconds.to_string(),
+        ),
+    ]
+    .into_iter()
+    .map(|(name, value)| (name.to_owned(), value))
+    .collect()
+}
+
+fn dvar_value<'a>(dvars: &'a [(String, String)], name: &str) -> Option<&'a str> {
+    dvars
+        .iter()
+        .find(|(set, _)| set.eq_ignore_ascii_case(name))
+        .map(|(_, value)| value.as_str())
+}
+
+fn set_dvar(dvars: &mut Vec<(String, String)>, name: &str, value: String) {
+    match dvars
+        .iter_mut()
+        .find(|(set, _)| set.eq_ignore_ascii_case(name))
+    {
+        Some((_, set)) => *set = value,
+        None => dvars.push((name.to_owned(), value)),
+    }
+}
+
+fn kill_confirmed_rules(dvars: &[(String, String)]) -> gamemode_iw4::kill_confirmed::Rules {
+    gamemode_iw4::kill_confirmed::normalize(
+        dvar_value(dvars, gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR),
+        dvar_value(dvars, gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR),
+        dvar_value(dvars, gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR),
+    )
+}
+
+fn apply_kill_confirmed_dvars(mode: gamemode_iw4::ModeId, dvars: &mut Vec<(String, String)>) {
+    if mode != gamemode_iw4::ModeId::KillConfirmed {
+        return;
+    }
+
+    let rules = kill_confirmed_rules(dvars);
+    set_dvar(
+        dvars,
+        gamemode_iw4::kill_confirmed::SCORE_LIMIT_DVAR,
+        rules.score_limit.to_string(),
+    );
+    set_dvar(
+        dvars,
+        gamemode_iw4::kill_confirmed::TIME_LIMIT_DVAR,
+        rules.time_limit_minutes.to_string(),
+    );
+    set_dvar(
+        dvars,
+        gamemode_iw4::kill_confirmed::TAG_LIFETIME_DVAR,
+        rules.tag_lifetime_seconds.to_string(),
+    );
+    set_dvar(dvars, "scr_war_scorelimit", rules.score_limit.to_string());
+    set_dvar(
+        dvars,
+        "scr_war_timelimit",
+        rules.time_limit_minutes.to_string(),
+    );
+}
+
+fn bootstrap_limits(
+    mode: gamemode_iw4::ModeId,
+    kind: gamemode_iw4::GameModeKind,
+    dvars: &[(String, String)],
+) -> (i32, u32) {
+    let score_limit = std::env::var("IW4L_SCORE_LIMIT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or_else(|| {
+            if mode == gamemode_iw4::ModeId::KillConfirmed {
+                return kill_confirmed_rules(dvars).score_limit as i32;
+            }
+            mode.hooks().rules.score_limit.unwrap_or(match kind {
+                gamemode_iw4::GameModeKind::Domination => gamemode_iw4::dom::SCORE_LIMIT,
+                gamemode_iw4::GameModeKind::Demolition => 0,
+                _ => sim::FFA.score_limit,
+            })
+        });
+    let time_limit_ms = if mode == gamemode_iw4::ModeId::KillConfirmed {
+        kill_confirmed_rules(dvars).time_limit_ms()
+    } else {
+        mode.hooks().rules.time_limit_ms.unwrap_or(match kind {
+            gamemode_iw4::GameModeKind::Domination => gamemode_iw4::dom::TIME_LIMIT_MS,
+            gamemode_iw4::GameModeKind::Demolition => gamemode_iw4::dd::TIME_LIMIT_MS,
+            _ => sim::FFA.time_limit_ms,
+        })
+    };
+    (score_limit, time_limit_ms)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::BTreeMap;
+
+    #[test]
+    fn kill_confirmed_script_compiles_against_the_iw4_catalog() {
+        let sources = BTreeMap::from([
+            (
+                "iw4l_modes/kill_confirmed".to_owned(),
+                include_str!("../../assets/src/kill_confirmed.gsc.txt").to_owned(),
+            ),
+            (
+                "maps/mp/gametypes/_gamescore".to_owned(),
+                "giveTeamScoreForObjective(team, score) { return; }".to_owned(),
+            ),
+        ]);
+        let program = sim::script::Program::load(
+            &sources,
+            &["iw4l_modes/kill_confirmed"],
+            &sim::script::Catalog::iw4(),
+        )
+        .expect("Kill Confirmed GSC should compile");
+        assert!(program.function_count() > 0);
+    }
 }
 
 pub fn install_script_model_id(content: asset_world::ScriptModelId) -> sim::ScriptModelId {
@@ -1763,6 +1908,8 @@ fn install_clip_and_player(
     host_classes: Option<&HostClassLoadouts>,
     mode: gamemode_iw4::ModeId,
     kind: gamemode_iw4::GameModeKind,
+    score_limit: i32,
+    time_limit_ms: u32,
     allow_debug_actions: bool,
 ) -> Result<(&'static str, Vec<Option<String>>), InstallRefusal> {
     if !sim_weapons.owned_by(weapons) || !content.uses_weapons(sim_weapons.content()) {
@@ -1932,21 +2079,8 @@ fn install_clip_and_player(
         seed: 0,
         mode,
         kind,
-        score_limit: std::env::var("IW4L_SCORE_LIMIT")
-            .ok()
-            .and_then(|s| s.parse().ok())
-            .unwrap_or_else(|| {
-                mode.hooks().rules.score_limit.unwrap_or(match kind {
-                    gamemode_iw4::GameModeKind::Domination => gamemode_iw4::dom::SCORE_LIMIT,
-                    gamemode_iw4::GameModeKind::Demolition => 0,
-                    _ => sim::FFA.score_limit,
-                })
-            }),
-        time_limit_ms: mode.hooks().rules.time_limit_ms.unwrap_or(match kind {
-            gamemode_iw4::GameModeKind::Domination => gamemode_iw4::dom::TIME_LIMIT_MS,
-            gamemode_iw4::GameModeKind::Demolition => gamemode_iw4::dd::TIME_LIMIT_MS,
-            _ => sim::FFA.time_limit_ms,
-        }),
+        score_limit,
+        time_limit_ms,
         allow_debug_actions,
         intermission_view,
         airstrike_height,

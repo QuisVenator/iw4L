@@ -2,6 +2,7 @@ mod artifact_cache;
 mod asset_graph;
 mod gltf_export;
 mod iwd;
+mod kill_confirmed_assets;
 mod lane;
 mod lane_capability;
 pub mod loading_screen;

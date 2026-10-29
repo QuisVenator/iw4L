@@ -231,7 +231,7 @@ impl Default for VertSkin {
 }
 
 impl VertSkin {
-    pub(crate) fn rigid(bone: u8) -> Self {
+    pub fn rigid(bone: u8) -> Self {
         Self {
             bones: [bone, 0, 0, 0],
             weight_flags: 1 << 5,

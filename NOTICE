@@ -28,6 +28,13 @@ Fira Mono (crates/console/assets/FiraMono-Regular.ttf)
   fd8c8c0a3d353cd99e8ca1662942d165e6961407.
   SIL Open Font License 1.1 — full text in crates/console/assets/OFL-FiraMono.txt
 
+Dog tags - Military (crates/assets/assets/kill_confirmed_dogtag/)
+  Copyright Nik Ladoukakis
+  https://sketchfab.com/3d-models/dog-tags-military-9879d4ab79944b4fb927cfa7ae827808
+  CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+  The source mesh and its blue/orange iw4L derivatives are bundled with the
+  Kill Confirmed prototype. See the adjacent ATTRIBUTION.md for details.
+
 --------------------------------------------------------------------------------
 Third-party source code
 --------------------------------------------------------------------------------

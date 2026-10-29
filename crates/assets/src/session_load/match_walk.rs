@@ -465,7 +465,7 @@ pub(super) async fn walk_prepared_match(
             decl_refs.n, decl_refs.real, decl_refs.reference,
         ));
     let (mut global, finalized_ids) = global.publish();
-    let map_ids = provisional_map_ids
+    let mut map_ids = provisional_map_ids
         .into_iter()
         .map(|id| finalized_ids.get(id).copied().flatten())
         .collect::<Vec<_>>();
@@ -722,6 +722,17 @@ pub(super) async fn walk_prepared_match(
             .into(),
     );
     decode_fx_colour_maps(&world.fx, &mut global, &image_trees, &progress, &mut report);
+    match crate::kill_confirmed_assets::install_kill_confirmed_dogtags(
+        &mut world,
+        &mut global,
+        &mut map_ids,
+    ) {
+        Ok(line) => report.push(line),
+        Err(error) => {
+            diag::warn!(World, "{error}");
+            report.push(error);
+        }
+    }
     world.family_impact_fx = [t5_impact_fx, t6_impact_fx].into_iter().flatten().collect();
     if world.impact_fx.is_none() {
         world.impact_fx = world

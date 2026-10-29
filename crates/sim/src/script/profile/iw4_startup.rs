@@ -98,4 +98,23 @@ mod tests {
                 .any(|entry| entry.contains("gun_game"))
         );
     }
+
+    #[test]
+    fn kill_confirmed_runs_after_war_and_before_the_map() {
+        let sources = BTreeMap::from([
+            ("maps/mp/gametypes/war".to_owned(), String::new()),
+            ("iw4l_modes/kill_confirmed".to_owned(), String::new()),
+            ("maps/mp/mp_afghan".to_owned(), String::new()),
+        ]);
+        let startup = Iw4Startup::new(&sources, "war", "mp_afghan", ModeId::KillConfirmed);
+        assert_eq!(
+            startup.entries,
+            [
+                "maps/mp/gametypes/war::main",
+                "iw4l_modes/kill_confirmed::main",
+                "maps/mp/mp_afghan::main",
+                "maps/mp/gametypes/_callbacksetup::codecallback_startgametype",
+            ]
+        );
+    }
 }

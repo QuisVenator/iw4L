@@ -3,6 +3,7 @@ pub(crate) const BARRELS: &str = include_str!("barrels.gsc.txt");
 pub(crate) const T6_EQUIPMENT: &str = include_str!("t6_equipment.gsc.txt");
 
 pub(crate) const GUN_GAME: &str = include_str!("gun_game.gsc.txt");
+pub(crate) const KILL_CONFIRMED: &str = include_str!("kill_confirmed.gsc.txt");
 
 /// Built-in GSC modules named by the mode registry. Keeping this lookup next
 /// to the embedded sources means the loader does not need mode-specific
@@ -22,7 +23,29 @@ pub(crate) fn install_builtin_mode_scripts(sources: &mut crate::ScriptSources) {
 fn builtin_mode_source(module: &str) -> Option<&'static str> {
     match module {
         "iw4l_modes/gun_game" => Some(GUN_GAME),
+        "iw4l_modes/kill_confirmed" => Some(KILL_CONFIRMED),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn every_registered_mode_script_has_an_embedded_source() {
+        let mut sources = crate::ScriptSources::default();
+        install_builtin_mode_scripts(&mut sources);
+        for mode in gamemode_iw4::ModeId::ALL {
+            for extension in mode.hooks().scripts {
+                let source = sources.read(extension.module).unwrap();
+                assert!(
+                    !source.is_empty(),
+                    "{} has an empty source",
+                    extension.module
+                );
+            }
+        }
     }
 }
 

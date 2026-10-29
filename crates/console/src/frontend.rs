@@ -3,8 +3,8 @@ use bevy::prelude::*;
 use frame::{UiMenuDvars, UiMenuRequest, UiPartyState};
 use ui::frontend::maps::{map_label, map_preview, pack_maps};
 use ui::frontend::rules::{
-    MATCH_CONFIG, host_rules, normalize_gun_game, reset_gun_game, seed_gun_game, seed_rules,
-    selected_game,
+    MATCH_CONFIG, host_rules, normalize_gun_game, normalize_kill_confirmed, reset_gun_game,
+    reset_kill_confirmed, seed_gun_game, seed_kill_confirmed, seed_rules, selected_game,
 };
 
 use crate::{CommandSpec, ConsoleCommand, ConsoleRegistry};
@@ -68,6 +68,8 @@ pub(crate) fn register(registry: &mut ConsoleRegistry) {
         "ui_lobby_cheats",
         "ui_gun_game_apply",
         "ui_gun_game_defaults",
+        "ui_kc_apply",
+        "ui_kc_defaults",
         "ui_asset_family",
         "ui_vote_skip",
         "ui_maps",
@@ -196,6 +198,7 @@ pub(crate) fn route(
         state.rules_seeded = true;
     }
     seed_gun_game(&mut dvars);
+    seed_kill_confirmed(&mut dvars);
     let have = *state.family_inventory.get_or_insert_with(|| {
         let trees = asset_transport::NamespaceTrees::discover(&asset_transport::GamesRoot(
             identity.games_root.clone(),
@@ -377,6 +380,18 @@ pub(crate) fn route(
                     }
                     reset_gun_game(&mut dvars);
                 }
+                "ui_kc_apply" => {
+                    if !party.in_lobby || !party.is_host {
+                        return Err("Only the lobby host can change Kill Confirmed setup".into());
+                    }
+                    normalize_kill_confirmed(&mut dvars)?;
+                }
+                "ui_kc_defaults" => {
+                    if !party.in_lobby || !party.is_host {
+                        return Err("Only the lobby host can change Kill Confirmed setup".into());
+                    }
+                    reset_kill_confirmed(&mut dvars);
+                }
                 "ui_start_match" => {
                     if !party.in_lobby || !party.is_host {
                         return Err("Only the lobby host can start a match".into());
@@ -384,6 +399,9 @@ pub(crate) fn route(
                     let (map, mode) = selected_game(&dvars, &maps)?;
                     if mode.token() == "gun" {
                         normalize_gun_game(&mut dvars)?;
+                    }
+                    if mode.token() == "conf" {
+                        normalize_kill_confirmed(&mut dvars)?;
                     }
                     let families = services
                         .bridge
@@ -646,6 +664,8 @@ pub(crate) fn route(
                 "ui_password_status"
             } else if command.name.starts_with("ui_gun_game") {
                 "ui_gun_game_status"
+            } else if command.name.starts_with("ui_kc") {
+                "ui_kc_status"
             } else if command.name.starts_with("ui_browser")
                 || command.name.starts_with("ui_join_lobby")
             {

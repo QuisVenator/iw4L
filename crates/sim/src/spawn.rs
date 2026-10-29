@@ -94,7 +94,7 @@ pub struct HostCheats(pub bool);
 pub struct HostGameModeSelection(ModeId);
 
 impl HostGameModeSelection {
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 10] = [
         Self(ModeId::FreeForAll),
         Self(ModeId::Domination),
         Self(ModeId::Demolition),
@@ -104,6 +104,7 @@ impl HostGameModeSelection {
         Self(ModeId::Headquarters),
         Self(ModeId::Sabotage),
         Self(ModeId::GunGame),
+        Self(ModeId::KillConfirmed),
     ];
 
     pub fn from_token(token: &str) -> Option<Self> {
@@ -428,6 +429,15 @@ mod tests {
         assert_eq!(selection.kind(), GameModeKind::FreeForAll);
         assert_eq!(selection.token(), "gun");
         assert_eq!(selection.display_name(), "GUN GAME");
+    }
+
+    #[test]
+    fn kill_confirmed_selects_tdm_policy() {
+        let selection = HostGameModeSelection::from_token("conf").unwrap();
+        assert_eq!(selection.mode(), ModeId::KillConfirmed);
+        assert_eq!(selection.kind(), GameModeKind::TeamDeathmatch);
+        assert_eq!(selection.display_name(), "KILL CONFIRMED");
+        assert!(HostGameModeSelection::ALL.contains(&selection));
     }
 
     #[test]

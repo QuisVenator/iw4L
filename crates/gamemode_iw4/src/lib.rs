@@ -12,6 +12,7 @@ pub mod gamelogic;
 pub mod gaps;
 pub mod globallogic;
 pub mod gun_game;
+pub mod kill_confirmed;
 pub mod kind;
 pub mod load;
 pub mod mode;
