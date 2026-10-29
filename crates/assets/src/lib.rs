@@ -3,6 +3,7 @@ mod asset_graph;
 mod gltf_export;
 mod iwd;
 mod kill_confirmed_assets;
+mod kill_confirmed_pickup;
 mod lane;
 mod lane_capability;
 pub mod loading_screen;

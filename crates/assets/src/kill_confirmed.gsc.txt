@@ -93,7 +93,8 @@ kcDropTag(victim, attacker)
     visualOrigin = victim.origin + (0, 0, 32);
     friendly = spawn("script_model", visualOrigin);
     friendly setmodel("iw4l_kc_dogtag_friendly");
-    friendly.angles = (0, randomint(360), 0);
+    spinStart = randomint(360);
+    friendly.angles = (0, spinStart, 0);
     friendly hide();
 
     enemy = spawn("script_model", visualOrigin);
@@ -106,6 +107,8 @@ kcDropTag(victim, attacker)
     tag = spawnStruct();
     tag.guid = guid;
     tag.origin = visualOrigin;
+    tag.spawnTime = getTime();
+    tag.spinStart = spinStart;
     tag.victimTeam = victim.sessionteam;
     tag.attacker = attacker;
     tag.friendly = friendly;
@@ -116,7 +119,31 @@ kcDropTag(victim, attacker)
     level.kcTags[guid] = tag;
     trigger thread kcWatchTag(tag);
     trigger thread kcUpdateTagVisibility(tag);
+    level thread kcAnimateTag(tag);
     level thread kcExpireTag(tag);
+}
+
+kcAnimateTag(tag)
+{
+    level endon("game_ended");
+
+    for (;;)
+    {
+        if (!isDefined(tag) || !tag.active)
+            return;
+        if (!isDefined(tag.friendly) || !isDefined(tag.enemy))
+            return;
+
+        elapsed = (getTime() - tag.spawnTime) / 1000.0;
+        height = tag.origin[2] + sin(elapsed * 120.0) * 3.0;
+        yaw = tag.spinStart + elapsed * 70.0;
+
+        tag.friendly.origin = (tag.origin[0], tag.origin[1], height);
+        tag.enemy.origin = tag.friendly.origin;
+        tag.friendly.angles = (0, yaw, 0);
+        tag.enemy.angles = tag.friendly.angles;
+        wait 0.05;
+    }
 }
 
 kcUpdateTagVisibility(tag)
@@ -160,6 +187,7 @@ kcWatchTag(tag)
 
         if (player.sessionteam == tag.victimTeam)
         {
+            player playlocalsound("iw4l_kc_friendly_tag_pickup");
             if (isDefined(tag.attacker))
                 tag.attacker iprintln("Kill Confirmed: your kill was denied.");
             tag.active = false;
@@ -175,6 +203,7 @@ kcWatchTag(tag)
             tags = 255;
         player.modeLevel = tags;
         player maps\mp\gametypes\_gamescore::giveTeamScoreForObjective(player.sessionteam, 1);
+        player playlocalsound("iw4l_kc_tag_pickup");
         player iprintln("Kill Confirmed: tag collected.");
         kcCleanupTag(tag);
         return;

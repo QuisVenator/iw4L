@@ -274,6 +274,73 @@ impl SoundCatalog {
         self.selection_weights.clear();
     }
 
+    pub fn install_pcm16_alias(
+        &mut self,
+        game: ZoneGame,
+        alias: &str,
+        rate: u32,
+        channels: u16,
+        pcm: Vec<u8>,
+        volume: f32,
+    ) -> std::result::Result<(), String> {
+        let namespace = ns_of(game);
+        if alias.is_empty() || alias.len() > 1023 {
+            return Err("embedded sound alias must be 1-1023 bytes".into());
+        }
+        if self.index_in(namespace, alias).is_some() {
+            return Err(format!("embedded sound alias `{alias}` already exists"));
+        }
+        if !(1..=2).contains(&channels) {
+            return Err("embedded sound must be mono or stereo".into());
+        }
+        if rate == 0 || !volume.is_finite() || volume < 0.0 {
+            return Err("embedded sound has invalid rate or volume".into());
+        }
+        if pcm.is_empty() || !pcm.len().is_multiple_of(usize::from(channels) * 2) {
+            return Err("embedded sound must contain complete 16-bit PCM frames".into());
+        }
+
+        let zone = ZoneOwner::COMMON_MP;
+        let file_name = format!("{alias}.wav");
+        let loaded_index = self.loaded.len();
+        let mut loaded = LoadedSoundPcm::captured(
+            game,
+            file_name.clone(),
+            MSS_PCM,
+            rate,
+            i32::from(channels),
+            pcm,
+            Vec::new(),
+        );
+        loaded.samples = u32::try_from(loaded.encoded_bytes().len() / (usize::from(channels) * 2))
+            .unwrap_or(u32::MAX);
+        loaded.zone = zone;
+        self.register_loaded(loaded);
+        self.register_sound(CapturedSound {
+            name: alias.to_owned(),
+            aliases: vec![CapturedAlias {
+                alias_name: alias.to_owned(),
+                file_type: Some(1),
+                file_exists: Some(1),
+                file_name: Some(file_name.clone()),
+                loaded_name: Some(file_name),
+                loaded: AssetEdge::bind_order(loaded_index, zone),
+                loaded_binding_origin: crate::LoadedBindingOrigin::AuthoredName,
+                vol_min: volume,
+                vol_max: volume,
+                pitch_min: 1.0,
+                pitch_max: 1.0,
+                probability: 1.0,
+                looping: Some(false),
+                ..Default::default()
+            }],
+            game,
+            zone,
+        });
+        self.finalize();
+        Ok(())
+    }
+
     pub fn playback_policy(
         &self,
         index: usize,
@@ -1007,5 +1074,39 @@ impl SoundCatalog {
             .get(index)
             .filter(|weights| !weights.is_empty())?;
         Some(pick_weighted_variant_index(weights, rng, avoid))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn embedded_pcm_alias_binds_and_publishes() {
+        let mut catalog = SoundCatalog::default();
+        catalog
+            .install_pcm16_alias(
+                ZoneGame::Iw4,
+                "iw4l_test_pickup",
+                48_000,
+                2,
+                vec![0; 48_000 / 20 * 2 * 2],
+                0.5,
+            )
+            .expect("install embedded PCM alias");
+
+        let index = catalog
+            .index_in(AssetNamespace::Iw4, "iw4l_test_pickup")
+            .expect("alias is present");
+        let bound = catalog
+            .bind_published_alias(index, 0)
+            .expect("alias policy is published");
+        let media = bound.media().expect("media binding").expect("loaded media");
+        assert!(matches!(media, BoundSoundMedia::Loaded { .. }));
+        assert_eq!(bound.policy().volume(0.0).unwrap(), 0.5);
+        assert_eq!(
+            catalog.script_alias_looping()["iw4l_test_pickup"],
+            Some(false)
+        );
     }
 }

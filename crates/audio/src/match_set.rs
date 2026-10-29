@@ -260,6 +260,13 @@ fn queue_match_clips(
         let (ns, alias) = crate::aliases::match_ui_alias(namespace.namespace, alias);
         request_named(clips, &bank.0, ns, alias, &mut set);
     }
+    for alias in [
+        gamemode_iw4::kill_confirmed::PICKUP_SOUND_ALIAS,
+        gamemode_iw4::kill_confirmed::FRIENDLY_PICKUP_SOUND_ALIAS,
+    ] {
+        aliases += 1;
+        request_named(clips, &bank.0, AssetNamespace::Iw4, alias, &mut set);
+    }
     let mut breath_policies = HashSet::new();
     for weapon in 1..=weapons.registry().len() as u32 {
         if weapons

@@ -3,6 +3,8 @@
 pub const SCORE_LIMIT_DVAR: &str = "scr_kc_score_limit";
 pub const TIME_LIMIT_DVAR: &str = "scr_kc_time_limit";
 pub const TAG_LIFETIME_DVAR: &str = "scr_kc_tag_lifetime";
+pub const PICKUP_SOUND_ALIAS: &str = "iw4l_kc_tag_pickup";
+pub const FRIENDLY_PICKUP_SOUND_ALIAS: &str = "iw4l_kc_friendly_tag_pickup";
 
 pub const DEFAULT_SCORE_LIMIT: u32 = 65;
 pub const DEFAULT_TIME_LIMIT_MINUTES: u32 = 5;

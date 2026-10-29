@@ -200,7 +200,7 @@ fn start_match_load(
                             .sound
                             .take()
                             .unwrap_or_else(|| Err("the map zone never opened".into()));
-                        let bank = asset_audio::compose_sound_bank(
+                        let mut bank = asset_audio::compose_sound_bank(
                             sources,
                             &zone,
                             prepared
@@ -209,6 +209,13 @@ fn start_match_load(
                                 .expect("prepared map family"),
                             map,
                         );
+                        match crate::kill_confirmed_pickup::install(&mut bank.catalog) {
+                            Ok(line) => prepared.report.push(line),
+                            Err(error) => {
+                                diag::warn!(World, "{error}");
+                                prepared.report.push(error);
+                            }
+                        }
                         prepared.sound_gaps = bank.gaps.len();
                         prepared.script_sound_aliases = Some(bank.catalog.script_alias_looping());
                         Ok(bank.catalog)
