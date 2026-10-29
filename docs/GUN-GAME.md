@@ -63,8 +63,11 @@ on top, and the map runs afterwards. Additional modes can declare the same
 ordering, optional score/time rule overrides, and a display token without
 adding another `IW4L_*` environment flag.
 
-A normal kill advances the killer one level. A melee kill does not advance the
-killer; instead the victim drops one level, stopping at the first weapon.
+A normal kill advances the killer one level, provided it was made with the
+killer's current Gun Game weapon. This prevents a lingering rocket or other
+multi-kill source from consuming several levels after the first kill has already
+changed the killer's weapon. A melee kill does not advance the killer; instead
+the victim drops one level, stopping at the first weapon.
 Suicides also drop the player one level, including unattributed environmental
 deaths such as falling. Demoted players receive the correct weapon on their
 next spawn. Killing with the final weapon starts the end-of-match sequence.

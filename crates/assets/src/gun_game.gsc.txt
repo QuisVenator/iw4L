@@ -106,6 +106,39 @@ gunGameWeaponAt(player, index)
     return level.gunGameWeapons[index];
 }
 
+gunGameWeaponBaseName(weapon)
+{
+    if (!isdefined(weapon) || weapon == "")
+    {
+        return "";
+    }
+    parts = strtok(tolower(weapon), "/");
+    if (parts.size == 0)
+    {
+        return "";
+    }
+    return parts[parts.size - 1];
+}
+
+gunGameIsCurrentWeapon(player, weapon)
+{
+    if (!isdefined(player.gunGameLevel) || !isdefined(weapon) || weapon == "none")
+    {
+        return false;
+    }
+    levelCount = gunGameLevelCount(player);
+    if (levelCount <= 0)
+    {
+        return false;
+    }
+    index = player.gunGameLevel;
+    if (index >= levelCount)
+    {
+        index = levelCount - 1;
+    }
+    return gunGameWeaponBaseName(weapon) == gunGameWeaponBaseName(gunGameWeaponAt(player, index));
+}
+
 gunGameConnect()
 {
     level endon("game_ended");
@@ -203,7 +236,7 @@ gunGameDeath()
     self endon("game_ended");
     for (;;)
     {
-        self waittill("death", attacker, means);
+        self waittill("death", attacker, means, weapon);
         if (!isdefined(attacker) || attacker == self || (isdefined(means) && (means == "MOD_SUICIDE" || means == "MOD_FALLING")))
         {
             levelCount = gunGameLevelCount(self);
@@ -229,6 +262,10 @@ gunGameDeath()
                     self iprintln("Gun Game: melee kill demoted you to " + (self.gunGameLevel + 1) + " / " + levelCount);
                 }
                 attacker iprintln("Gun Game: you stay; opponent " + (previousLevel + 1) + " -> " + (self.gunGameLevel + 1));
+            }
+            else if (!gunGameIsCurrentWeapon(attacker, weapon))
+            {
+                attacker iprintln("Gun Game: kill did not advance you; it was not made with your current weapon");
             }
             else if (attacker.gunGameLevel < gunGameLevelCount(attacker) - 1)
             {

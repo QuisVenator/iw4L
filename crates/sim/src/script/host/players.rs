@@ -327,7 +327,13 @@ pub(crate) fn settle_deaths(world: &mut World) {
         if callback == KILLED {
             let attacker = args.get(1).cloned().unwrap_or(Value::Undefined);
             let means = args.get(3).cloned().unwrap_or(Value::Undefined);
-            raise(world, victim.clone(), "death", vec![attacker, means]);
+            let weapon = args.get(4).cloned().unwrap_or(Value::Undefined);
+            raise(
+                world,
+                victim.clone(),
+                "death",
+                vec![attacker, means, weapon],
+            );
         }
         if run_now(world, callback, victim, args, now).is_err() {
             return;
