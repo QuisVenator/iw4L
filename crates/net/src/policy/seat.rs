@@ -310,6 +310,7 @@ fn overlay_archived_world(
     out.meta.prematch = live.meta.prematch;
     out.meta.score_limit = live.meta.score_limit;
     out.meta.time_limit_ms = live.meta.time_limit_ms;
+    out.meta.mode = live.meta.mode;
     out.meta.kind = live.meta.kind;
     out.meta.sound_aliases = live.meta.sound_aliases.clone();
     out.meta.hud_strings = live.meta.hud_strings.clone();

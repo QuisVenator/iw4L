@@ -531,6 +531,7 @@ dependencies = [
  "fastfile_t5",
  "fastfile_t6",
  "frame",
+ "gamemode_iw4",
  "libc",
  "lighting_iw4",
  "png",

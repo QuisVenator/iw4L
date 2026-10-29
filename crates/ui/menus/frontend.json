@@ -1959,11 +1959,22 @@
       {
         "index": 23,
         "fields": {
+          "rect": {
+            "x": -64,
+            "y": 188,
+            "w": 336,
+            "h": 20,
+            "horz_align": 1,
+            "vert_align": 1
+          },
+          "text_key": "GUN GAME",
+          "text_literal": true,
           "vis_exp": "1",
+          "disabled_exp": "0",
           "handlers": {
             "action": [
               {
-                "Script": "play mouse_click; close self;"
+                "Script": "play mouse_click; exec \"ui_select_mode gun\";"
               }
             ]
           }
@@ -1972,7 +1983,17 @@
       {
         "index": 24,
         "fields": {
-          "vis_exp": "0"
+          "text_key": "@PLATFORM_BACK_CAPS",
+          "text_literal": false,
+          "vis_exp": "1",
+          "disabled_exp": "0",
+          "handlers": {
+            "action": [
+              {
+                "Script": "play mouse_click; close self;"
+              }
+            ]
+          }
         }
       }
     ]

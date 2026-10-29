@@ -144,8 +144,8 @@ pub use sound_alias_cs::{
 };
 pub use spawn::{
     AuthoredSpawnPoint, HostCheats, HostGameModeSelection, MatchBootstrap, SPAWN_BAD_DIST,
-    SPAWN_IDEAL_DIST, SpawnAttemptReport, SpawnDecision, SpawnReject, host_game_mode_kind,
-    pick_ffa_spawn, spawn_candidate_indices, spawn_candidate_indices_for,
+    SPAWN_IDEAL_DIST, SpawnAttemptReport, SpawnDecision, SpawnReject, host_game_mode,
+    host_game_mode_kind, pick_ffa_spawn, spawn_candidate_indices, spawn_candidate_indices_for,
 };
 pub use step::phase_materialize_entity_dobjs;
 

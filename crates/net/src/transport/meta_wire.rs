@@ -461,6 +461,7 @@ pub fn encode_snapshot_meta_body(
     out.put_u32(elapsed_ms);
     out.put_i32(meta.score_limit);
     out.put_u32(meta.time_limit_ms);
+    out.put_u8(meta.mode.wire_tag());
     out.put_u8(meta.kind.wire_tag());
     debug_assert!(meta.clients.len() <= u16::MAX as usize);
     out.put_u16(meta.clients.len() as u16);
@@ -547,6 +548,8 @@ pub(super) fn decode_snapshot_meta_body(
     };
     let score_limit = input.get_i32()?;
     let time_limit_ms = input.get_u32()?;
+    let mode = gamemode_iw4::ModeId::from_wire_tag(input.get_u8()?)
+        .ok_or(WireError::Malformed("unknown ModeId tag"))?;
     let kind = gamemode_iw4::GameModeKind::from_wire_tag(input.get_u8()?)
         .ok_or(WireError::Malformed("unknown GameModeKind tag"))?;
     let count = input.get_u16()? as usize;
@@ -608,6 +611,7 @@ pub(super) fn decode_snapshot_meta_body(
             prematch,
             score_limit,
             time_limit_ms,
+            mode,
             kind,
             clients,
             journal,

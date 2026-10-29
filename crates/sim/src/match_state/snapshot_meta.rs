@@ -98,6 +98,7 @@ pub struct SnapshotMeta {
 
     pub time_limit_ms: u32,
 
+    pub mode: gamemode_iw4::ModeId,
     pub kind: gamemode_iw4::GameModeKind,
     pub clients: Vec<(ClientId, ClientSnapshotMeta)>,
 

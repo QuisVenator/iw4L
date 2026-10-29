@@ -4,6 +4,28 @@ pub(crate) const T6_EQUIPMENT: &str = include_str!("t6_equipment.gsc.txt");
 
 pub(crate) const GUN_GAME: &str = include_str!("gun_game.gsc.txt");
 
+/// Built-in GSC modules named by the mode registry. Keeping this lookup next
+/// to the embedded sources means the loader does not need mode-specific
+/// branches; adding a script-only mode only touches its registry entry and the
+/// source table below.
+pub(crate) fn install_builtin_mode_scripts(sources: &mut crate::ScriptSources) {
+    for mode in gamemode_iw4::ModeId::ALL {
+        for extension in mode.hooks().scripts {
+            let Some(source) = builtin_mode_source(extension.module) else {
+                continue;
+            };
+            sources.insert_source(extension.module, source.to_owned());
+        }
+    }
+}
+
+fn builtin_mode_source(module: &str) -> Option<&'static str> {
+    match module {
+        "iw4l_modes/gun_game" => Some(GUN_GAME),
+        _ => None,
+    }
+}
+
 pub(crate) const RADIATION: &str = r#"main()
 {
     waittillframeend;

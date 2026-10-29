@@ -1,7 +1,10 @@
 # Gun Game progression
 
-`make gun-game` runs a free-for-all with an 81-level progression drawn from the
-weapons available in the installed IW4 and T6 content. Levels rise from pistols
+`make gun-game` starts the `gun` game mode, a free-for-all with an 81-level
+progression drawn from the weapons available in the installed IW4 and T6
+content. The same mode is selectable as `GUN GAME` in the host lobby. The host
+UI and lobby protocol use the token `gun`; retail scripts still run the `dm`
+base rules underneath. Levels rise from pistols
 through stronger primaries, then reverse into precision weapons, launchers,
 special weapons and finally throwing weapons.
 
@@ -22,6 +25,13 @@ special weapons and finally throwing weapons.
 The same script names occur in both games for SCAR-H, TAR-21 and the Riot
 Shield. Levels use `iw4:weapon/...` or `t6:weapon/...` so each entry resolves to
 the intended game rather than the first matching script name.
+
+Gun Game is registered in `gamemode_iw4::ModeId` as its own mode with
+`GameModeKind::FreeForAll` as its base rules. Its GSC module is an
+`AfterGametype` hook, so the retail `dm` gametype starts first, Gun Game layers
+on top, and the map runs afterwards. Additional modes can declare the same
+ordering, optional score/time rule overrides, and a display token without
+adding another `IW4L_*` environment flag.
 
 A normal kill advances the killer one level. A melee kill does not advance the
 killer; instead the victim drops one level, stopping at the first weapon. The

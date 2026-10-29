@@ -1,7 +1,7 @@
 use crate::frame::FrameWorld;
 use entity_iw4::{TEAM_ALLIES, TEAM_AXIS, TEAM_FREE};
-use gamemode_iw4::GameModeKind;
 use gamemode_iw4::ffa::{SPAWN_CLASSNAME, START_SPAWN_CLASSNAME};
+use gamemode_iw4::{GameModeKind, ModeId};
 use movement_iw4::{CollisionBackend, GroundTraceInput};
 use trace_iw4::Trace;
 
@@ -41,6 +41,8 @@ pub struct MatchBootstrap {
 
     pub seed: u64,
 
+    pub mode: ModeId,
+
     pub kind: gamemode_iw4::GameModeKind,
 
     pub allow_debug_actions: bool,
@@ -62,6 +64,7 @@ impl Default for MatchBootstrap {
             classes: Vec::new(),
             bot_classes: Vec::new(),
             seed: 0,
+            mode: ModeId::FreeForAll,
             kind: gamemode_iw4::GameModeKind::FreeForAll,
             allow_debug_actions: false,
             score_limit,
@@ -73,41 +76,50 @@ impl Default for MatchBootstrap {
 }
 
 pub fn host_game_mode_kind() -> GameModeKind {
+    host_game_mode().base()
+}
+
+pub fn host_game_mode() -> ModeId {
     std::env::var("IW4L_GAMETYPE")
         .ok()
         .as_deref()
-        .and_then(GameModeKind::parse_ascii_ignore_case)
-        .unwrap_or(GameModeKind::FreeForAll)
+        .and_then(ModeId::parse_ascii_ignore_case)
+        .unwrap_or(ModeId::FreeForAll)
 }
 
 #[derive(bevy_ecs::prelude::Resource, Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct HostCheats(pub bool);
 
 #[derive(bevy_ecs::prelude::Resource, Clone, Copy, Debug, PartialEq, Eq)]
-pub struct HostGameModeSelection(GameModeKind);
+pub struct HostGameModeSelection(ModeId);
 
 impl HostGameModeSelection {
-    pub const ALL: [Self; 8] = [
-        Self(GameModeKind::FreeForAll),
-        Self(GameModeKind::Domination),
-        Self(GameModeKind::Demolition),
-        Self(GameModeKind::TeamDeathmatch),
-        Self(GameModeKind::SearchAndDestroy),
-        Self(GameModeKind::CaptureTheFlag),
-        Self(GameModeKind::Headquarters),
-        Self(GameModeKind::Sabotage),
+    pub const ALL: [Self; 9] = [
+        Self(ModeId::FreeForAll),
+        Self(ModeId::Domination),
+        Self(ModeId::Demolition),
+        Self(ModeId::TeamDeathmatch),
+        Self(ModeId::SearchAndDestroy),
+        Self(ModeId::CaptureTheFlag),
+        Self(ModeId::Headquarters),
+        Self(ModeId::Sabotage),
+        Self(ModeId::GunGame),
     ];
 
     pub fn from_token(token: &str) -> Option<Self> {
-        GameModeKind::parse_ascii_ignore_case(token).map(Self)
+        ModeId::parse_ascii_ignore_case(token).map(Self)
     }
 
     pub fn from_env() -> Self {
-        Self(host_game_mode_kind())
+        Self(host_game_mode())
+    }
+
+    pub const fn mode(self) -> ModeId {
+        self.0
     }
 
     pub const fn kind(self) -> GameModeKind {
-        self.0
+        self.0.base()
     }
 
     pub fn token(self) -> &'static str {
@@ -403,4 +415,35 @@ pub fn pick_ffa_spawn(spawns: &[AuthoredSpawnPoint]) -> Option<(usize, &Authored
                 .find(|(_, p)| p.classname == SPAWN_CLASSNAME)
         })
         .or_else(|| spawns.first().map(|p| (0, p)))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn gun_game_selects_its_own_mode_over_ffa_policy() {
+        let selection = HostGameModeSelection::from_token("gun").unwrap();
+        assert_eq!(selection.mode(), ModeId::GunGame);
+        assert_eq!(selection.kind(), GameModeKind::FreeForAll);
+        assert_eq!(selection.token(), "gun");
+        assert_eq!(selection.display_name(), "GUN GAME");
+    }
+
+    #[test]
+    fn host_mode_aliases_preserve_the_retail_tokens() {
+        assert_eq!(
+            HostGameModeSelection::from_token("free_for_all")
+                .unwrap()
+                .mode(),
+            ModeId::FreeForAll
+        );
+        assert_eq!(
+            HostGameModeSelection::from_token("gungame").unwrap().mode(),
+            ModeId::GunGame
+        );
+        assert!(
+            HostGameModeSelection::ALL.contains(&HostGameModeSelection::from_token("gun").unwrap())
+        );
+    }
 }

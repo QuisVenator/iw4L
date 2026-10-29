@@ -301,6 +301,7 @@ pub fn apply_prepared_match(
             account_defaults,
             script_sound_aliases,
             objective_weapons,
+            mode,
             kind,
             gametype,
             scene: loaded_scene,
@@ -591,6 +592,7 @@ pub fn apply_prepared_match(
             &mut sim_cam,
             &mut input_gate,
             host_classes.as_deref(),
+            mode,
             kind,
             allow_debug_actions,
         )?;
@@ -753,7 +755,7 @@ pub fn apply_prepared_match(
                 probe.world_report = world_report;
             }
             diag::script_boundary("installed", &script_facts);
-            diag::info!(Sim, "match: {} ({}) — world installed ({} dm spawn points); class select waits for admission", kind.display_name(), kind.token(), spawn_count);
+            diag::info!(Sim, "match: {} ({}) — world installed ({} dm spawn points); class select waits for admission", mode.display_name(), mode.token(), spawn_count);
             perf::match_installed(&installed_zone, 1);
             frame::scope::insert(world, InstalledMatch {
                 request_id,
@@ -824,6 +826,7 @@ struct MatchInstallPlan {
     account_defaults: Option<sim::PlayerDataDefaults>,
     script_sound_aliases: Option<std::collections::BTreeMap<String, Option<bool>>>,
     objective_weapons: Vec<(String, u32)>,
+    mode: gamemode_iw4::ModeId,
     kind: gamemode_iw4::GameModeKind,
     gametype: &'static str,
     scene: WorldScene,
@@ -1016,13 +1019,14 @@ fn preflight_match_install(
             zone,
         );
     }
-    let kind = match match_kind(mode_selection) {
-        Ok(kind) => kind,
+    let mode = match match_mode(mode_selection) {
+        Ok(mode) => mode,
         Err(gap) => {
             diag::info!(Sim, "match install refused: {gap}");
             return Err(InstallRefusal::with_gap(gap, gap));
         }
     };
+    let kind = mode.base();
     let mut objective_weapons = Vec::new();
     let mut absent_effects = std::collections::BTreeSet::new();
     if let Some(
@@ -1208,7 +1212,7 @@ fn preflight_match_install(
             cells: shared_icons.cells.clone(),
         },
     );
-    let startup = sim::script::Iw4Startup::new(&sources, gametype, zone);
+    let startup = sim::script::Iw4Startup::new(&sources, gametype, zone, mode);
     let roots: Vec<&str> = startup.roots.iter().map(String::as_str).collect();
     let scripts = sim::script::Program::load(&sources, &roots, &sim::script::Catalog::iw4())
         .map_err(|e| script_refusal(zone, gametype, "compile", &e))?;
@@ -1307,6 +1311,7 @@ fn preflight_match_install(
         script_dvars,
         account_defaults,
         objective_weapons,
+        mode,
         kind,
         gametype,
         scene,
@@ -1460,16 +1465,16 @@ fn player_kit_collision(
     })
 }
 
-fn match_kind(
+fn match_mode(
     selection: Option<&sim::HostGameModeSelection>,
-) -> Result<gamemode_iw4::GameModeKind, &'static str> {
+) -> Result<gamemode_iw4::ModeId, &'static str> {
     if let Some(selection) = selection {
-        return Ok(selection.kind());
+        return Ok(selection.mode());
     }
     match std::env::var("IW4L_GAMETYPE") {
-        Ok(s) if !s.trim().is_empty() => gamemode_iw4::GameModeKind::parse_ascii_ignore_case(&s)
+        Ok(s) if !s.trim().is_empty() => gamemode_iw4::ModeId::parse_ascii_ignore_case(&s)
             .ok_or("IW4L_GAMETYPE names no known gametype (gsc.mode.out-of-scope)"),
-        _ => Ok(gamemode_iw4::GameModeKind::FreeForAll),
+        _ => Ok(gamemode_iw4::ModeId::FreeForAll),
     }
 }
 
@@ -1715,6 +1720,7 @@ fn install_clip_and_player(
     sim_cam: &mut SimCamera,
     input_gate: &mut AuthorityInputGate,
     host_classes: Option<&HostClassLoadouts>,
+    mode: gamemode_iw4::ModeId,
     kind: gamemode_iw4::GameModeKind,
     allow_debug_actions: bool,
 ) -> Result<(&'static str, Vec<Option<String>>), InstallRefusal> {
@@ -1883,20 +1889,23 @@ fn install_clip_and_player(
         classes,
         bot_classes,
         seed: 0,
+        mode,
         kind,
         score_limit: std::env::var("IW4L_SCORE_LIMIT")
             .ok()
             .and_then(|s| s.parse().ok())
-            .unwrap_or(match kind {
-                gamemode_iw4::GameModeKind::Domination => gamemode_iw4::dom::SCORE_LIMIT,
-                gamemode_iw4::GameModeKind::Demolition => 0,
-                _ => sim::FFA.score_limit,
+            .unwrap_or_else(|| {
+                mode.hooks().rules.score_limit.unwrap_or(match kind {
+                    gamemode_iw4::GameModeKind::Domination => gamemode_iw4::dom::SCORE_LIMIT,
+                    gamemode_iw4::GameModeKind::Demolition => 0,
+                    _ => sim::FFA.score_limit,
+                })
             }),
-        time_limit_ms: match kind {
+        time_limit_ms: mode.hooks().rules.time_limit_ms.unwrap_or(match kind {
             gamemode_iw4::GameModeKind::Domination => gamemode_iw4::dom::TIME_LIMIT_MS,
             gamemode_iw4::GameModeKind::Demolition => gamemode_iw4::dd::TIME_LIMIT_MS,
             _ => sim::FFA.time_limit_ms,
-        },
+        }),
         allow_debug_actions,
         intermission_view,
         airstrike_height,

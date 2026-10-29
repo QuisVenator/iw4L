@@ -748,7 +748,7 @@ fn run_map(
         .insert_resource(LoadingScreen::new(
             progress.clone(),
             loading_title,
-            sim::host_game_mode_kind().display_name().to_owned(),
+            sim::host_game_mode().display_name().to_owned(),
         ))
         .insert_resource(UiAssetRoot(ui_games_root))
         .insert_resource(StartupCommands {

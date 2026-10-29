@@ -13,6 +13,7 @@ pub mod gaps;
 pub mod globallogic;
 pub mod kind;
 pub mod load;
+pub mod mode;
 mod parse_scores;
 pub mod perks;
 pub mod phase;
@@ -38,6 +39,7 @@ pub use gaps::{ScriptGap, ScriptGapCause};
 pub use globallogic::{OBJECTIVE_BASED, POST_ROUND_TIME_MS};
 
 pub use kind::GameModeKind;
+pub use mode::{ModeHooks, ModeId, ModeRuleHooks, ModeSpec, ScriptExtension, ScriptHook};
 
 pub use parse_scores::{PARSE_SCORES_CAP, ParsedScores, parse_scores};
 pub use perks::copycat_weapnext_bind_active;

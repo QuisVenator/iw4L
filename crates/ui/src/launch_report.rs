@@ -25,8 +25,8 @@ pub fn publish_gap_hud(
         format!("zone request: {}", report.zone),
         format!(
             "match: {} (`{}`) score_limit={} time_limit_ms={}",
-            sim::host_game_mode_kind().display_name(),
-            sim::host_game_mode_kind().token(),
+            sim::host_game_mode().display_name(),
+            sim::host_game_mode().token(),
             sim::FFA.score_limit,
             sim::FFA.time_limit_ms
         ),

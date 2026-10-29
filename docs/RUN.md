@@ -16,15 +16,16 @@ write `make map ZONE=iw5:mp_overwatch` or use `cargo run`. Recipes: `make
 scenario`, `chaos`, `bench` ([`BENCH.md`](BENCH.md)), `bench-live`, `lifecycle-*`
 (`*_CMDS` in the `Makefile`). Live recipes use `[profile.play]`; LTO is `PROFILE=release`.
 
-**Gun Game prototype:** `make gun-game` starts Rust with an opt-in free-for-all
-weapon progression. Choose a default class to spawn, then add opponents with the
-console command `bot add 3`. The 81-level IW4/T6 sequence moves from pistols
+**Gun Game:** `make gun-game` starts the registered free-for-all-based Gun Game
+mode. It is also the `GUN GAME` entry in the host game-mode menu (`gun` on the
+wire or via `IW4L_GAMETYPE=gun`). Choose a default class to spawn, then add
+opponents with the console command `bot add 3`. The 81-level IW4/T6 sequence moves from pistols
 through primaries, precision weapons, launchers and throwing weapons; the full
 list is in [`GUN-GAME.md`](GUN-GAME.md). Each opponent kill advances a level,
 while a melee kill leaves the killer in place and demotes the victim one level.
 Progress survives deaths, and suicides do not advance it. With cheats enabled,
 `gungame_advance` advances the local player one level and re-equips immediately.
-This is an experimental local mode; the usual free-for-all scoreboard and class
+This is a local mode; the usual free-for-all scoreboard and class
 perks still apply. The sequence requires T6 content. The stock end-of-match script
 currently reports missing match-data upload services, so post-match presentation
 may be incomplete. Override the map with `make gun-game ZONE=mp_terminal`.

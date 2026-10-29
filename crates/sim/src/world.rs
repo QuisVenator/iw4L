@@ -623,6 +623,10 @@ impl SimState {
         self.bootstrap.kind
     }
 
+    pub fn game_mode(&self) -> gamemode_iw4::ModeId {
+        self.bootstrap.mode
+    }
+
     pub fn authored_spawn_origins(&self) -> Vec<[f32; 3]> {
         self.bootstrap
             .spawns
@@ -2409,6 +2413,7 @@ impl SimState {
                 prematch: self.prematch,
                 score_limit: self.bootstrap.score_limit,
                 time_limit_ms: self.bootstrap.time_limit_ms,
+                mode: self.bootstrap.mode,
                 kind: self.bootstrap.kind,
                 clients,
                 journal: self.events.journal().to_vec(),
