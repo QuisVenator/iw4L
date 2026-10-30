@@ -85,6 +85,7 @@ pub enum ModeId {
     Sabotage = 7,
     GunGame = 8,
     KillConfirmed = 9,
+    TeamGunGame = 10,
 }
 
 const DFS: &[&str] = &["dm", "ffa", "freeforall", "free_for_all", "deathmatch"];
@@ -97,6 +98,7 @@ const HEADQUARTERS: &[&str] = &["koth", "hq", "headquarters"];
 const SABOTAGE: &[&str] = &["sab", "sabotage"];
 const GUN_GAME: &[&str] = &["gun", "gungame", "gun_game", "gg"];
 const KILL_CONFIRMED: &[&str] = &["kc", "killconfirmed", "kill_confirmed", "confirmed"];
+const TEAM_GUN_GAME: &[&str] = &["tgun", "teamgungame", "team_gun_game", "tgg"];
 
 const GUN_GAME_SCRIPTS: &[ScriptExtension] = &[ScriptExtension {
     module: "iw4l_modes/gun_game",
@@ -110,7 +112,7 @@ const KILL_CONFIRMED_SCRIPTS: &[ScriptExtension] = &[ScriptExtension {
     hook: ScriptHook::AfterGametype,
 }];
 
-const MODE_SPECS: [ModeSpec; 10] = [
+const MODE_SPECS: [ModeSpec; 11] = [
     ModeSpec {
         token: ffa::GAMETYPE_TOKEN,
         aliases: DFS,
@@ -201,10 +203,23 @@ const MODE_SPECS: [ModeSpec; 10] = [
             weapon_pickups_enabled: true,
         },
     },
+    ModeSpec {
+        token: "tgg",
+        aliases: TEAM_GUN_GAME,
+        display_name: "TEAM GUN GAME",
+        base: GameModeKind::TeamDeathmatch,
+        host_selectable: true,
+        hooks: ModeHooks {
+            rules: ModeRuleHooks::NONE,
+            scripts: GUN_GAME_SCRIPTS,
+            killstreaks_enabled: false,
+            weapon_pickups_enabled: false,
+        },
+    },
 ];
 
 impl ModeId {
-    pub const ALL: [Self; 10] = [
+    pub const ALL: [Self; 11] = [
         Self::FreeForAll,
         Self::Demolition,
         Self::Domination,
@@ -215,6 +230,7 @@ impl ModeId {
         Self::Sabotage,
         Self::GunGame,
         Self::KillConfirmed,
+        Self::TeamGunGame,
     ];
 
     pub const fn spec(self) -> &'static ModeSpec {
@@ -239,6 +255,10 @@ impl ModeId {
 
     pub const fn hooks(self) -> ModeHooks {
         self.spec().hooks
+    }
+
+    pub const fn is_gun_game(self) -> bool {
+        matches!(self, Self::GunGame | Self::TeamGunGame)
     }
 
     pub fn parse(s: &str) -> Option<Self> {
@@ -281,6 +301,7 @@ impl ModeId {
             7 => Some(Self::Sabotage),
             8 => Some(Self::GunGame),
             9 => Some(Self::KillConfirmed),
+            10 => Some(Self::TeamGunGame),
             _ => None,
         }
     }
@@ -325,6 +346,23 @@ mod tests {
         assert_eq!(spec.hooks.scripts.len(), 1);
         assert_eq!(spec.hooks.scripts[0].hook, ScriptHook::AfterGametype);
         assert_eq!(spec.hooks.scripts[0].module, "iw4l_modes/kill_confirmed");
+    }
+
+    #[test]
+    fn team_gun_game_is_tdm_with_the_shared_gun_game_script() {
+        let spec = ModeId::TeamGunGame.spec();
+        assert_eq!(spec.base, GameModeKind::TeamDeathmatch);
+        assert_eq!(spec.token, "tgg");
+        assert_eq!(spec.display_name, "TEAM GUN GAME");
+        assert_eq!(ModeId::parse("team_gun_game"), Some(ModeId::TeamGunGame));
+        assert_eq!(ModeId::parse("tgg"), Some(ModeId::TeamGunGame));
+        assert_eq!(ModeId::parse("tgun"), Some(ModeId::TeamGunGame));
+        assert!(ModeId::TeamGunGame.is_gun_game());
+        assert!(ModeId::GunGame.is_gun_game());
+        assert!(!ModeId::TeamDeathmatch.is_gun_game());
+        assert_eq!(spec.hooks.scripts, ModeId::GunGame.hooks().scripts);
+        assert!(!spec.hooks.killstreaks_enabled);
+        assert!(!spec.hooks.weapon_pickups_enabled);
     }
 
     #[test]

@@ -8,6 +8,14 @@ host UI and lobby protocol use the token `gun`; retail scripts still run the
 through stronger primaries, then reverse into precision weapons, launchers,
 special weapons and finally throwing weapons.
 
+`TEAM GUN GAME` uses the identical progression and host setup on top of retail
+Team Deathmatch. Its host and wire token is `tgg`. Each team has a shared
+highest-unlocked level, while each player has a personal level. A valid kill
+unlocks the next team level and moves only the killer to that level. Several
+teammates can therefore reach the final weapon. The first valid kill made by a
+player already on the final weapon ends the match for that player's team;
+reaching the level alone does not win.
+
 | Levels | Tier | Weapons |
 |---|---|---|
 | 1–8 | Pistols | USP .45, M9, Desert Eagle, .44 Magnum; T6: M93R, Five-Seven, FNP45, KAP-40 |
@@ -63,6 +71,12 @@ on top, and the map runs afterwards. Additional modes can declare the same
 ordering, optional score/time rule overrides, and a display token without
 adding another `IW4L_*` environment flag.
 
+Team Gun Game is a separate `ModeId` with `GameModeKind::TeamDeathmatch` as its
+base. It reuses the same `iw4l_modes/gun_game` extension, with an internal
+`scr_gg_team` flag enabling team checks. Keeping this as a distinct mode means
+team assignment, TDM spawning and team scoreboard presentation come from the
+existing team base rather than a runtime FFA/TDM switch.
+
 A normal kill advances the killer one level, provided it was made with the
 killer's current Gun Game weapon. This prevents a lingering rocket or other
 multi-kill source from consuming several levels after the first kill has already
@@ -71,6 +85,17 @@ the victim drops one level, stopping at the first weapon.
 Suicides also drop the player one level, including unattributed environmental
 deaths such as falling. Demoted players receive the correct weapon on their
 next spawn. Killing with the final weapon starts the end-of-match sequence.
+
+In Team Gun Game, friendly kills are ignored for both advancement and melee
+demotion. Each valid enemy kill raises that team's unlocked level by at most one
+and moves the killer to the team's new highest level. Teammates do not
+automatically catch up: a player who is behind moves to the team's highest
+unlocked level on their next valid kill, even if the team has already reached
+the final weapon. For example, after P1 unlocks weapon 2, P2's next kill unlocks
+weapon 3 and puts P2 directly on weapon 3. A final-weapon kill must still be
+made while the killer is already on the final weapon, but any teammate on that
+level may win. The TDM score limit is overridden so ordinary team kills cannot
+end the match before that kill.
 
 Killstreaks and dropped-weapon pickups are disabled for the whole match,
 including debug-granted streaks. Players can still retrieve ammunition for the

@@ -117,4 +117,23 @@ mod tests {
             ]
         );
     }
+
+    #[test]
+    fn team_gun_game_reuses_the_gun_game_script_over_war() {
+        let sources = BTreeMap::from([
+            ("maps/mp/gametypes/war".to_owned(), String::new()),
+            ("iw4l_modes/gun_game".to_owned(), String::new()),
+            ("maps/mp/mp_rust".to_owned(), String::new()),
+        ]);
+        let startup = Iw4Startup::new(&sources, "war", "mp_rust", ModeId::TeamGunGame);
+        assert_eq!(
+            startup.entries,
+            [
+                "maps/mp/gametypes/war::main",
+                "iw4l_modes/gun_game::main",
+                "maps/mp/mp_rust::main",
+                "maps/mp/gametypes/_callbacksetup::codecallback_startgametype",
+            ]
+        );
+    }
 }

@@ -35,6 +35,14 @@ requires T6 content. The stock end-of-match script
 currently reports missing match-data upload services, so post-match presentation
 may be incomplete. Override the map with `make gun-game ZONE=mp_terminal`.
 
+`TEAM GUN GAME` is the team variant (`make team-gun-game`, `TEAM GUN GAME` in the
+mode menu, `tgg` on the wire or via `IW4L_GAMETYPE=tgg`). It uses the same `GUN
+GAME SETUP` weapon list, but progression is shared per team: each valid kill
+unlocks the next team level and moves the killer to that level. Teammates
+catching up do so on their next kill, so several players may reach the final
+weapon. The first valid final-weapon kill wins for that team. Friendly kills do
+not advance or demote, and the TDM score limit cannot end the match early.
+
 
 Linux startup creates `iw4`, `iw5`, `t5` and `t6` symlinks in `IW4L_GAMES` for missing games with exactly one valid Steam installation. Existing entries are preserved.
 

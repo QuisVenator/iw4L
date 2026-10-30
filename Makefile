@@ -95,6 +95,10 @@ map: require-games
 gun-game: require-games
 	cd $(ROOT) && IW4L_GAMETYPE=gun $(CARGO) run $(PROFILE_ARG) -p launcher -- map $(or $(ZONE),mp_rust) $(CMDS_ARG)
 
+# Individual progression on team deathmatch; first final-weapon kill wins.
+team-gun-game: require-games
+	cd $(ROOT) && IW4L_GAMETYPE=tgg $(CARGO) run $(PROFILE_ARG) -p launcher -- map $(or $(ZONE),mp_rust) $(CMDS_ARG)
+
 export-gltf: require-games
 	@test -n "$(or $(ZONE),$(ARGS))" || { echo "usage: make export-gltf <zone>"; exit 1; }
 	cd $(ROOT) && $(CARGO) run $(PROFILE_ARG) -p launcher -- export-gltf $(or $(ZONE),$(ARGS))

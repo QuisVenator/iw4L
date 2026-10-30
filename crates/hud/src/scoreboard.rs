@@ -85,7 +85,7 @@ fn rows_from_parsed(snap: &Snapshot, parsed: &ParsedScores) -> Vec<ScoreboardRow
 
 fn sort_rows(rows: &mut [ScoreboardRow], mode: ModeId) {
     rows.sort_by(|a, b| match mode {
-        ModeId::GunGame | ModeId::KillConfirmed => b
+        ModeId::GunGame | ModeId::TeamGunGame | ModeId::KillConfirmed => b
             .mode_level
             .cmp(&a.mode_level)
             .then(b.score.kills.cmp(&a.score.kills))
@@ -102,7 +102,9 @@ fn sort_rows(rows: &mut [ScoreboardRow], mode: ModeId) {
 fn column_header(mode: ModeId, key: &str, localized: String) -> String {
     if key == "CGAME_SB_SCORE" {
         match mode {
-            ModeId::GunGame => return GUN_GAME_LEVEL_HEADER.to_owned(),
+            ModeId::GunGame | ModeId::TeamGunGame => {
+                return GUN_GAME_LEVEL_HEADER.to_owned();
+            }
             ModeId::KillConfirmed => return KILL_CONFIRMED_TAGS_HEADER.to_owned(),
             _ => {}
         }
@@ -112,7 +114,7 @@ fn column_header(mode: ModeId, key: &str, localized: String) -> String {
 
 fn primary_value(row: &ScoreboardRow, mode: ModeId) -> i32 {
     match mode {
-        ModeId::GunGame => i32::from(row.mode_level) + 1,
+        ModeId::GunGame | ModeId::TeamGunGame => i32::from(row.mode_level) + 1,
         ModeId::KillConfirmed => i32::from(row.mode_level),
         _ => row.score.score,
     }
@@ -547,6 +549,24 @@ mod tests {
         assert_eq!(
             column_header(ModeId::FreeForAll, "CGAME_SB_SCORE", "SCORE".into()),
             "SCORE"
+        );
+    }
+
+    #[test]
+    fn team_gun_game_uses_the_same_level_ordering_and_column() {
+        let snap = snapshot(
+            ModeId::TeamGunGame,
+            &[(1, 3, 1, 2), (2, 0, 0, 5), (3, 4, 2, 5), (4, 20, 3, 1)],
+        );
+        let rows = rows_from_parsed(&snap, &parsed(&[1, 2, 3, 4]));
+        assert_eq!(
+            rows.iter().map(|row| row.score.client).collect::<Vec<_>>(),
+            [3, 2, 1, 4]
+        );
+        assert_eq!(primary_value(&rows[0], ModeId::TeamGunGame), 6);
+        assert_eq!(
+            column_header(ModeId::TeamGunGame, "CGAME_SB_SCORE", "SCORE".into()),
+            "LVL"
         );
     }
 

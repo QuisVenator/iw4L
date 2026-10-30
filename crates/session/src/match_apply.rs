@@ -1250,7 +1250,7 @@ fn preflight_match_install(
     script_dvars.push(("mapname".into(), zone.to_owned()));
     script_dvars.push(("g_gametype".into(), gametype.to_owned()));
     script_dvars.push(("sv_maxclients".into(), "18".into()));
-    if mode == gamemode_iw4::ModeId::GunGame {
+    if mode.is_gun_game() {
         for (name, value) in gun_game_default_dvars() {
             if !script_dvars
                 .iter()
@@ -1288,6 +1288,7 @@ fn preflight_match_install(
     }
     script_dvars.extend(script_dvar_overrides());
     apply_kill_confirmed_dvars(mode, &mut script_dvars);
+    apply_gun_game_mode_dvars(mode, &mut script_dvars);
     let script_entries = startup.entries;
     let authority_models = authority_entity_model_install(&prepared.world);
     let model_spawns = script_model_spawns(&prepared.world.script_model_instances);
@@ -1472,6 +1473,23 @@ fn apply_kill_confirmed_dvars(mode: gamemode_iw4::ModeId, dvars: &mut Vec<(Strin
     );
 }
 
+fn apply_gun_game_mode_dvars(mode: gamemode_iw4::ModeId, dvars: &mut Vec<(String, String)>) {
+    if !mode.is_gun_game() {
+        return;
+    }
+
+    let team = if mode == gamemode_iw4::ModeId::TeamGunGame {
+        "1"
+    } else {
+        "0"
+    };
+    dvars.retain(|(name, _)| !name.eq_ignore_ascii_case(gamemode_iw4::gun_game::TEAM_DVAR));
+    dvars.push((
+        gamemode_iw4::gun_game::TEAM_DVAR.to_owned(),
+        team.to_owned(),
+    ));
+}
+
 fn bootstrap_limits(
     mode: gamemode_iw4::ModeId,
     kind: gamemode_iw4::GameModeKind,
@@ -1504,6 +1522,7 @@ fn bootstrap_limits(
 
 #[cfg(test)]
 mod tests {
+    use super::{apply_gun_game_mode_dvars, dvar_value};
     use std::collections::BTreeMap;
 
     #[test]
@@ -1525,6 +1544,47 @@ mod tests {
         )
         .expect("Kill Confirmed GSC should compile");
         assert!(program.function_count() > 0);
+    }
+
+    #[test]
+    fn gun_game_script_compiles_for_both_variants() {
+        let sources = BTreeMap::from([
+            (
+                "iw4l_modes/gun_game".to_owned(),
+                include_str!("../../assets/src/gun_game.gsc.txt").to_owned(),
+            ),
+            (
+                "maps/mp/gametypes/_gamelogic".to_owned(),
+                "endGame(winner, reason) { return; }".to_owned(),
+            ),
+        ]);
+        let program = sim::script::Program::load(
+            &sources,
+            &["iw4l_modes/gun_game"],
+            &sim::script::Catalog::iw4(),
+        )
+        .expect("Gun Game GSC should compile for FFA and Team Gun Game");
+        assert!(program.function_count() > 0);
+    }
+
+    #[test]
+    fn gun_game_mode_dvars_force_the_team_flag() {
+        let mut dvars = vec![
+            ("scr_gg_team".to_owned(), "1".to_owned()),
+            ("scr_gg_weapons".to_owned(), "iw4:weapon/usp_mp".to_owned()),
+        ];
+        apply_gun_game_mode_dvars(gamemode_iw4::ModeId::GunGame, &mut dvars);
+        assert_eq!(dvar_value(&dvars, "scr_gg_team"), Some("0"));
+        assert_eq!(
+            dvars
+                .iter()
+                .filter(|(name, _)| name.eq_ignore_ascii_case("scr_gg_team"))
+                .count(),
+            1
+        );
+
+        apply_gun_game_mode_dvars(gamemode_iw4::ModeId::TeamGunGame, &mut dvars);
+        assert_eq!(dvar_value(&dvars, "scr_gg_team"), Some("1"));
     }
 }
 

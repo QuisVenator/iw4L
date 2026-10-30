@@ -5,6 +5,7 @@ pub const RANDOM_SCOPE_DVAR: &str = "scr_gg_random_scope";
 pub const WEAPONS_DVAR: &str = "scr_gg_weapons";
 pub const POOL_DVAR: &str = "scr_gg_pool";
 pub const FINAL_WEAPON_DVAR: &str = "scr_gg_final";
+pub const TEAM_DVAR: &str = "scr_gg_team";
 
 pub const DEFAULT_PROGRESSION: &str = "ordered";
 pub const DEFAULT_RANDOM_SCOPE: &str = "shared";

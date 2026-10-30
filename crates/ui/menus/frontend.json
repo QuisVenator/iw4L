@@ -761,6 +761,31 @@
       {
         "index": 23,
         "fields": {
+          "name": "team_gun_game_setup",
+          "text_key": "TEAM GUN GAME SETUP",
+          "text_literal": true,
+          "text_exp": "",
+          "rect": {
+            "y": 164
+          },
+          "handlers": {
+            "action": [
+              {
+                "Script": "play mouse_click; open gun_game_setup;"
+              }
+            ]
+          },
+          "vis_exp": "op 38 s:75695f67616d6574797065 op 1 op 12 s:746767",
+          "disabled_exp": "0",
+          "float_exp": [],
+          "dvar_flags": 0,
+          "dvar_test": "",
+          "enable_dvar": ""
+        }
+      },
+      {
+        "index": 23,
+        "fields": {
           "name": "kill_confirmed_setup",
           "text_key": "KILL CONFIRMED SETUP",
           "text_literal": true,
@@ -2099,7 +2124,7 @@
           "text_key": "@PLATFORM_BACK_CAPS",
           "text_literal": false,
           "rect": {
-            "y": 228
+            "y": 248
           },
           "vis_exp": "1",
           "disabled_exp": "0",
@@ -2140,6 +2165,42 @@
             "focus": [
               {
                 "Script": "play mouse_over; setItemColor self backcolor 0 0 0 1; setlocalvarstring ui_info_name \"KILL CONFIRMED\"; setlocalvarstring ui_info_desc \"Collect enemy dog tags to score. A friendly pickup denies the kill.\"; setlocalvarstring ui_info_icon \"\";"
+              }
+            ],
+            "leave_focus": [
+              {
+                "Script": "setItemColor self backcolor 0 0 0 0; setlocalvarstring ui_info_name \"\"; setlocalvarstring ui_info_desc \"\"; setlocalvarstring ui_info_icon \"\";"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "index": 23,
+        "fields": {
+          "name": "team_gun_game",
+          "text_key": "TEAM GUN GAME",
+          "text_literal": true,
+          "text_exp": "",
+          "rect": {
+            "x": -64,
+            "y": 228,
+            "w": 336,
+            "h": 20,
+            "horz_align": 1,
+            "vert_align": 1
+          },
+          "vis_exp": "1",
+          "disabled_exp": "0",
+          "handlers": {
+            "action": [
+              {
+                "Script": "play mouse_click; exec \"ui_select_mode tgg\";"
+              }
+            ],
+            "focus": [
+              {
+                "Script": "play mouse_over; setItemColor self backcolor 0 0 0 1; setlocalvarstring ui_info_name \"TEAM GUN GAME\"; setlocalvarstring ui_info_desc \"Each kill unlocks the next weapon for your team. The killer moves to the team's highest unlocked weapon; several teammates can reach the final weapon. A final-weapon kill wins. Killstreaks and pickups disabled.\"; setlocalvarstring ui_info_icon \"\";"
               }
             ],
             "leave_focus": [
